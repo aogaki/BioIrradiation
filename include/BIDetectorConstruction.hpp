@@ -23,6 +23,7 @@ private:
    G4LogicalVolume *fWorldLV;
 
    G4LogicalVolume *ConstructPlate();
+   G4LogicalVolume *ConstructWell();
    
    void DefineMaterial();
    G4Material *fVacuum;
