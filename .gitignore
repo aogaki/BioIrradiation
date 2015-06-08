@@ -1,0 +1,15 @@
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+BI
+G4History.macro
+Makefile
+*.root
+*.ods
+*.pdf
+*.pcm
+*.so
+*.d
+*~
+Makefile
+
