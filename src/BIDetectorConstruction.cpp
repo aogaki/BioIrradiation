@@ -16,6 +16,7 @@
 #include "G4RunManager.hh"
 #include "G4LogicalVolumeStore.hh"
 #include "G4UImanager.hh"
+#include "G4UnionSolid.hh"
 
 #include "BIDetectorConstruction.hpp"
 #include "BICommonSD.hpp"
@@ -69,86 +70,69 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
       = new G4PVPlacement(0, G4ThreeVector(), fWorldLV, "World", 0,
                           false, 0, checkOverlaps);
 
-   // window
-   G4double windowL = 163.6*mm;
-   G4double windowW = 118.4*mm;
-   G4double windowH = 0.5*mm;
-
-   G4Box *windowS = new G4Box("Window", windowL / 2., windowW / 2., windowH / 2.);
-   G4LogicalVolume *windowLV = new G4LogicalVolume(windowS, fWindowMat, "Window");
-   new G4PVPlacement(0, G4ThreeVector(), windowLV, "Window", fWorldLV,
-                     false, 0, checkOverlaps);
-
-   // air gap
-   //G4double airGapL = 163.6*mm;
-   //G4double airGapW = 118.4*mm;
-   //G4double airGapH = 0.5*mm;
-   G4double airGapL = windowL;
-   G4double airGapW = windowW;
-   G4double airGapH = 10.*mm;
-
-   G4ThreeVector airGapPos = G4ThreeVector(0., 0., windowH / 2. + airGapH / 2.);
-   
-   G4Box *airGapS = new G4Box("AirGap", airGapL / 2., airGapW / 2., airGapH / 2.);
-   G4LogicalVolume *airGapLV = new G4LogicalVolume(airGapS, fAir, "AirGap");
-   new G4PVPlacement(0, airGapPos, airGapLV, "AirGap", fWorldLV,
-                     false, 0, checkOverlaps);
-   
    // plate
-   //G4double plateL = 163.6*mm;
-   //G4double plateW = 118.4*mm;
-   //G4double plateH = 0.5*mm;
-   G4double plateL = windowL;
-   G4double plateW = windowW;
-   G4double plateH = 2.*mm;
-
-   G4ThreeVector platePos = G4ThreeVector(0., 0., windowH / 2. + airGapH + plateH / 2.);
-   
-   G4Box *plateS = new G4Box("Plate", plateL / 2., plateW / 2., plateH / 2.);
-   G4LogicalVolume *plateLV = new G4LogicalVolume(plateS, fPlateMat, "Plate");
-   new G4PVPlacement(0, platePos, plateLV, "Plate", fWorldLV,
+   G4LogicalVolume *plateLV = ConstructPlate();
+   new G4PVPlacement(0, G4ThreeVector(), plateLV, "Plate", fWorldLV,
                      false, 0, checkOverlaps);
-
-
-   // cell
-   //G4double cellL = 163.6*mm;
-   //G4double cellW = 118.4*mm;
-   //G4double cellH = 0.5*mm;
-   G4double cellL = windowL;
-   G4double cellW = windowW;
-   G4double cellH = 0.1*mm;
-
-   G4ThreeVector cellPos = G4ThreeVector(0., 0., windowH / 2. + airGapH +
-                                         plateH + cellH / 2.);
    
-   G4Box *cellS = new G4Box("Cell", cellL / 2., cellW / 2., cellH / 2.);
-   G4LogicalVolume *cellLV = new G4LogicalVolume(cellS, fCellMat, "Cell");
-   new G4PVPlacement(0, cellPos, cellLV, "Cell", fWorldLV,
-                     false, 0, checkOverlaps);
-
-
+// visualization options
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::White());
    visAttributes->SetVisibility(false);
    fWorldLV->SetVisAttributes(visAttributes);
    fVisAttributes.push_back(visAttributes);
 
-   visAttributes = new G4VisAttributes(G4Colour::Red());
-   windowLV->SetVisAttributes(visAttributes);
-   fVisAttributes.push_back(visAttributes);
-
    visAttributes = new G4VisAttributes(G4Colour::Cyan());
-   airGapLV->SetVisAttributes(visAttributes);
-   fVisAttributes.push_back(visAttributes);
-
-   visAttributes = new G4VisAttributes(G4Colour::Magenta());
+   visAttributes->SetVisibility(true);
    plateLV->SetVisAttributes(visAttributes);
    fVisAttributes.push_back(visAttributes);
 
-   visAttributes = new G4VisAttributes(G4Colour::Blue());
-   cellLV->SetVisAttributes(visAttributes);
-   fVisAttributes.push_back(visAttributes);
-
    return worldPV;
+}
+
+G4LogicalVolume *BIDetectorConstruction::ConstructPlate()
+{
+   G4LogicalVolume *plateLV;
+   G4double plateT = 1.*mm;
+   G4double plateL = 127.76*mm;
+   G4double plateW = 85.48*mm;
+   G4double plateH = 14.6*mm;
+
+   G4Box *topS = new G4Box("Top", plateL / 2., plateW / 2., plateT / 2.);
+
+   G4double wellL = 10.9*mm;
+   G4double wellD1 = 6.96*mm; // inner diameter of well opening
+   G4double wellD2 = 6.39*mm; // inner diameter of well bottom
+
+   G4Tubs *wellS = new G4Tubs("Well", 0, plateT + wellD1 / 2.,
+                              (plateT + wellL) / 2., 0, CLHEP::twopi);
+
+   //G4UnionSolid *plateS = new G4UnionSolid("Plate", nullptr, topS);
+   //G4UnionSolid *plateS = new G4UnionSolid("Plate", topS, wellS, wellRot, wellPos);
+   G4UnionSolid *plateS = (G4UnionSolid*)topS;
+
+   // adding wells
+   for(G4int iRow = 0; iRow < 8; iRow++){
+      for(G4int iColumn = 0; iColumn < 12; iColumn++){
+         G4cout << iRow <<"\t"<< iColumn << G4endl;
+         G4RotationMatrix *wellRot = new G4RotationMatrix(); // don't need?
+
+         G4double offsetRow = 11.24*mm;
+         G4double offsetColumn = 14.38*mm;
+         G4double wellPitch = 9.*mm;
+         G4double xStart = offsetColumn - (plateL / 2.);
+         G4double yStart = offsetRow - (plateW / 2.);
+         G4double xPos = xStart + iColumn * wellPitch;
+         G4double yPos = yStart + iRow * wellPitch;
+         G4double zPos = plateT / 2. + (plateT + wellL) / 2.;
+         G4ThreeVector wellPos = G4ThreeVector(xPos, yPos, zPos);
+         
+         plateS = new G4UnionSolid("Plate", plateS, wellS, wellRot, wellPos);
+      }
+   }
+   
+   plateLV = new G4LogicalVolume(plateS, fPlateMat, "Plate");
+   
+   return plateLV;
 }
 
 void BIDetectorConstruction::ConstructSDandField()
