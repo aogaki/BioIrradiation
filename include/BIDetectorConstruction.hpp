@@ -5,6 +5,7 @@
 
 #include "G4VUserDetectorConstruction.hh"
 #include "G4VPhysicalVolume.hh"
+#include "G4VSolid.hh"
 #include "G4Material.hh"
 #include "G4VisAttributes.hh"
 #include "G4LogicalVolume.hh"
@@ -21,10 +22,8 @@ public:
 
 private:
    G4LogicalVolume *fWorldLV;
+   G4bool fCheckOverlap;
 
-   G4LogicalVolume *ConstructPlate();
-   G4LogicalVolume *ConstructWell();
-   
    void DefineMaterial();
    G4Material *fVacuum;
    G4Material *fAir;
@@ -34,6 +33,54 @@ private:
    G4Material *fHolderMat;
    G4Material *fSealingMat;
    G4Material *fCellMat;
+   G4Material *fFilmMat;
+   G4Material *fStuffMat;
+   
+   // Geometries
+   // Do I really need all members? too much?
+   G4LogicalVolume *ConstructPlate();
+   G4double fPlateT;
+   G4double fPlateL;
+   G4double fPlateW;
+   G4double fPlateH;
+
+   G4LogicalVolume *ConstructFilm();
+   G4double fFilmT;
+   G4double fFilmL;
+   G4double fFilmW;
+
+   G4LogicalVolume *ConstructWell();
+   G4double fWellPitch;
+   G4double fWellOpening;
+   G4double fWellBottom;
+   G4double fWellH;
+
+   G4LogicalVolume *ConstructStuff();
+   G4double fCellT;
+   
+   G4LogicalVolume *ConstructCassette();
+   G4double fCassetteL;
+   G4double fCassetteW;
+   G4double fCassetteH;
+   G4double fCassetteBottomT;
+
+   G4LogicalVolume *ConstructHolder();
+   G4double fHolderL;
+   G4double fHolderW;
+   G4double fHolderT;
+
+   G4LogicalVolume *ConstructWindow();
+   G4double fWindowL;
+   G4double fWindowW;
+   G4double fWindowT;
+
+   G4LogicalVolume *ConstructSealing();
+   G4double fSealingL;
+   G4double fSealingW;
+   G4double fSealingT;
+
+   G4double fOpeningL;
+   G4double fOpeningW;
    
    std::vector<G4VisAttributes *> fVisAttributes;
 };

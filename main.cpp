@@ -25,6 +25,7 @@
 // Remove?
 #include "Randomize.hh"
 
+#include "BIPhysicsList.hpp"
 #include "BIDetectorConstruction.hpp"
 #include "BIActionInitialization.hpp"
 
@@ -81,6 +82,7 @@ int main(int argc, char **argv)
    //G4VModularPhysicsList *physicsList = new FTFP_BERT;
    //G4VModularPhysicsList *physicsList = new QGSP_BERT_HP;
    G4VModularPhysicsList *physicsList = new Shielding;
+   //G4VModularPhysicsList *physicsList = new BIPhysicsList;
    physicsList->SetVerboseLevel(1);
    //physicsList->SetCutValue(1.*um, "proton");
    //physicsList->SetCuts();
