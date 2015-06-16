@@ -25,22 +25,37 @@
 
 BIDetectorConstruction::BIDetectorConstruction()
    : G4VUserDetectorConstruction(),
-     fWorldLV(0),
-     fVacuum(0),
-     fAir(0),
-     fWindowMat(0),
-     fCassetteMat(0),
-     fPlateMat(0),
-     fHolderMat(0),
-     fSealingMat(0),
-     fCellMat(0),
-     fFilmMat(0),
-     fStuffMat(0)
+     fWorldLV(nullptr),
+     fWindowPV(nullptr),
+     fAirPV(nullptr),
+     fSealingPV(nullptr),
+     fHolderPV(nullptr),
+     fPlatePV(nullptr),
+     fFilmPV(nullptr),
+     fCassettePV(nullptr),
+     fVacuum(nullptr),
+     fAir(nullptr),
+     fWindowMat(nullptr),
+     fCassetteMat(nullptr),
+     fPlateMat(nullptr),
+     fHolderMat(nullptr),
+     fSealingMat(nullptr),
+     fCellMat(nullptr),
+     fFilmMat(nullptr),
+     fStuffMat(nullptr)
 {
    fCheckOverlap = true;
    
    DefineMaterial();
+   DefineGeoPar();
+   DefineCommands();
+}
 
+BIDetectorConstruction::~BIDetectorConstruction()
+{}
+
+void BIDetectorConstruction::DefineGeoPar()
+{
    // Geometry parameters
    // Should be read from geometry file?
    // It's user friendly?
@@ -51,12 +66,14 @@ BIDetectorConstruction::BIDetectorConstruction()
 
    fCellT = 150.*nm;
       
-   fPlateT = 1.*mm; // temporary
+   //fPlateT = 1.*mm; // temporary
+   fPlateT = 0.3*mm; // temporary
    fPlateL = 125.*mm; // temporary
    fPlateW = 82.4*mm; // temporary
    //fPlateH = 14.6*mm; // temporary
    fPlateH = fWellH + fPlateT; // temporary
-
+   fAirGap = 5.*mm;
+   
    const G4double mil = 25.3995*um;
    fFilmT = 4.4*mil; // temporary
    fFilmL = 125.*mm; // temporary
@@ -77,14 +94,18 @@ BIDetectorConstruction::BIDetectorConstruction()
 
    fHolderL = fCassetteL;
    fHolderW = fCassetteW;
-   fHolderT = 30.*mm - fCassetteH - fSealingT - fWindowT;
+   fHolderT = 1.7*mm;
 
+   fAirL = fCassetteL;
+   fAirW = fCassetteW;
+   fAirT = fCassetteH + fHolderT;
+   
+   fBumpT = 2.2*mm;
+   fBumpW = 2.*mm;
+   
    fOpeningL = 122.*mm;
    fOpeningW = 80.*mm;
 }
-
-BIDetectorConstruction::~BIDetectorConstruction()
-{}
 
 void BIDetectorConstruction::DefineMaterial()
 {
@@ -102,6 +123,12 @@ void BIDetectorConstruction::DefineMaterial()
    fStuffMat = manager->FindOrBuildMaterial("G4_WATER");
    fCellMat = manager->BuildMaterialWithNewDensity("G4_WATER_MODIFIED","G4_WATER",
                                                    1.1*g/cm/cm/cm);
+
+   G4Material *Si3N4 = new G4Material("SiliconNitride", 3.44*g/cm3, 2, kStateSolid);
+   G4Element *Si = manager->FindOrBuildElement("Si");
+   G4Element *N = manager->FindOrBuildElement("N");
+   Si3N4->AddElement(Si, 3);
+   Si3N4->AddElement(N, 4);
 }
 
 G4VPhysicalVolume *BIDetectorConstruction::Construct()
@@ -124,63 +151,60 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
                           false, 0, fCheckOverlap);
 
 /*
-   G4LogicalVolume *plateLV = ConstructPlate();
-   G4ThreeVector platePos = G4ThreeVector();
-   new G4PVPlacement(nullptr, platePos, plateLV, "Plate", fWorldLV,
+   G4LogicalVolume *holderLV = ConstructSimpleHolder();
+   G4ThreeVector holderPos = G4ThreeVector();
+   new G4PVPlacement(nullptr, holderPos, holderLV, "Holder", fWorldLV,
                      false, 0, fCheckOverlap);
 */
-   
+
    G4LogicalVolume *sealingLV = ConstructSealing();
    G4double sealingZ = (-fWindowT - fSealingT) / 2.;
    G4ThreeVector sealingPos = G4ThreeVector(0., 0., sealingZ);
-   new G4PVPlacement(nullptr, sealingPos, sealingLV, "Sealing", fWorldLV,
+   fSealingPV = new G4PVPlacement(nullptr, sealingPos, sealingLV, "Sealing", fWorldLV,
                      false, 0, fCheckOverlap);
    
    G4LogicalVolume *windowLV = ConstructWindow();
    G4double windowZ = 0.*mm;
    G4ThreeVector windowPos = G4ThreeVector(0., 0., windowZ);
-   new G4PVPlacement(nullptr, windowPos, windowLV, "Window", fWorldLV,
+   fWindowPV = new G4PVPlacement(nullptr, windowPos, windowLV, "Window", fWorldLV,
                      false, 0, fCheckOverlap);
 
-   G4double airL = fCassetteL;
-   G4double airW = fCassetteW;
-   G4double airH = fCassetteH + fHolderT;
-   G4Box *airS = new G4Box("Air", airL / 2., airW / 2., airH / 2.);
+   G4Box *airS = new G4Box("Air", fAirL / 2., fAirW / 2., fAirT / 2.);
    G4LogicalVolume *airLV = new G4LogicalVolume(airS, fAir, "Air");
    visAttributes = new G4VisAttributes(G4Colour::White());
    visAttributes->SetVisibility(false);
    airLV->SetVisAttributes(visAttributes);
    fVisAttributes.push_back(visAttributes);
    
-   G4double airZ = (fWindowT + airH) / 2.;
-   G4ThreeVector airPos = G4ThreeVector(0., 0., airZ);
-   new G4PVPlacement(nullptr, airPos, airLV, "Air", fWorldLV,
-                     false, 0, fCheckOverlap);
+   G4ThreeVector airPos = G4ThreeVector(0., 0., (fAirT + fWindowT) / 2.);
+   fAirPV = new G4PVPlacement(nullptr, airPos, airLV, "Air", fWorldLV,
+                              false, 0, fCheckOverlap);
    
    
-   G4LogicalVolume *holderLV = ConstructHolder();
+   //G4LogicalVolume *holderLV = ConstructHolder();
+   G4LogicalVolume *holderLV = ConstructSimpleHolder();
    G4double holderZ = -fCassetteH / 2.;
    G4ThreeVector holderPos = G4ThreeVector(0., 0., holderZ);
-   new G4PVPlacement(nullptr, holderPos, holderLV, "Holder", airLV,
-                     false, 0, fCheckOverlap);
+   fHolderPV = new G4PVPlacement(nullptr, holderPos, holderLV, "Holder", airLV,
+                                 false, 0, fCheckOverlap);
 
    G4LogicalVolume *plateLV = ConstructPlate();
-   G4double plateZ = -airH / 2. + 5.*mm + (fWellH + fPlateT) / 2.;
+   G4double plateZ = -fAirT / 2. + fAirGap + (fWellH + fPlateT) / 2.;
    G4ThreeVector platePos = G4ThreeVector(0., 0., plateZ);
-   new G4PVPlacement(nullptr, platePos, plateLV, "Plate", airLV,
-                     false, 0, fCheckOverlap);
+   fPlatePV = new G4PVPlacement(nullptr, platePos, plateLV, "Plate", airLV,
+                                false, 0, fCheckOverlap);
 
    G4LogicalVolume *filmLV = ConstructFilm();
    G4double filmZ = plateZ + fPlateH / 2. + fFilmT / 2.;
    G4ThreeVector filmPos = G4ThreeVector(0., 0., filmZ);
-   new G4PVPlacement(nullptr, filmPos, filmLV, "Film", airLV,
-                     false, 0, fCheckOverlap);
+   fFilmPV = new G4PVPlacement(nullptr, filmPos, filmLV, "Film", airLV,
+                               false, 0, fCheckOverlap);
 
    G4LogicalVolume *cassetteLV = ConstructCassette();
    G4double cassetteZ = fHolderT / 2.;
    G4ThreeVector cassettePos = G4ThreeVector(0., 0., cassetteZ);
-   new G4PVPlacement(nullptr, cassettePos, cassetteLV, "Cassette", airLV,
-                     false, 0, fCheckOverlap);
+   fCassettePV = new G4PVPlacement(nullptr, cassettePos, cassetteLV, "Cassette", airLV,
+                                   false, 0, fCheckOverlap);
 
    return worldPV;
 }
@@ -239,7 +263,7 @@ G4LogicalVolume *BIDetectorConstruction::ConstructStuff()
 }
 
 G4LogicalVolume *BIDetectorConstruction::ConstructPlate()
-{ // Think when inside of wells are filled
+{
    G4Box *plateS = new G4Box("Plate", fPlateL / 2., fPlateW / 2., fPlateH / 2.);
    G4LogicalVolume *plateLV = new G4LogicalVolume(plateS, fAir, "Plate");
    
@@ -331,7 +355,32 @@ G4LogicalVolume *BIDetectorConstruction::ConstructHolder()
 {
    G4Box *boardS = new G4Box("Holder", fHolderL / 2., fHolderW / 2., fHolderT / 2.);
    G4Box *openingS = new G4Box("Opening", fOpeningL / 2., fOpeningW / 2., fHolderT);
+   G4SubtractionSolid *topS = new G4SubtractionSolid("Holder", boardS, openingS);
+
+   G4Box *bumpS = new G4Box("Holder", (fOpeningL + fBumpW) / 2., (fOpeningW + fBumpW) / 2.,
+                            fBumpT / 2.);
+   G4SubtractionSolid *bottomS = new G4SubtractionSolid("Holder", bumpS, openingS);
+
+   G4ThreeVector bottomPos(0., 0., (fHolderT + fBumpT) / 2.);
+   G4UnionSolid *holderS = new G4UnionSolid("Holder", topS, bottomS, nullptr, bottomPos);
+   
+   G4LogicalVolume *holderLV = new G4LogicalVolume(holderS, fHolderMat, "Holder");
+   
+   G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Green());
+   visAttributes->SetVisibility(true);
+   holderLV->SetVisAttributes(visAttributes);
+   fVisAttributes.push_back(visAttributes);
+
+   return holderLV;
+}
+
+G4LogicalVolume *BIDetectorConstruction::ConstructSimpleHolder()
+{
+   G4Box *boardS = new G4Box("Holder", fHolderL / 2., fHolderW / 2., fHolderT / 2.);
+   G4Box *openingS = new G4Box("Opening", fBumpW + fOpeningL / 2., fBumpW + fOpeningW / 2.,
+                               fHolderT);
    G4SubtractionSolid *holderS = new G4SubtractionSolid("Holder", boardS, openingS);
+   
    G4LogicalVolume *holderLV = new G4LogicalVolume(holderS, fHolderMat, "Holder");
    
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Green());
@@ -375,14 +424,123 @@ void BIDetectorConstruction::ConstructSDandField()
    G4VSensitiveDetector *CommonSD = new BICommonSD("Common",
                                                    "CommonHitsCollection");
 
-   // Set SD for all LV.  Using G4LogicalVolume::SetSensitiveDetector() ?
-   // Which is better?
    G4LogicalVolumeStore *lvStore = G4LogicalVolumeStore::GetInstance();
    std::vector<G4LogicalVolume*>::const_iterator it;
    for(it = lvStore->begin(); it != lvStore->end(); it++){
-      SetSensitiveDetector((*it)->GetName(), CommonSD);
+      if((*it)->GetName() != "World")
+         SetSensitiveDetector((*it)->GetName(), CommonSD);
    }
-
-   fWorldLV->SetSensitiveDetector(nullptr);
 }
 
+void BIDetectorConstruction::DefineCommands()
+{
+   fMessenger = new G4GenericMessenger(this, "/BI/Geometry/", 
+                                       "For geometries");
+
+   
+   G4GenericMessenger::Command &windowTCmd
+      = fMessenger->DeclareMethodWithUnit("WindowThickness", "um",
+                                          &BIDetectorConstruction::SetWindowT, 
+                                          "Set the thickness of the window.");
+   windowTCmd.SetParameterName("thickness", true);
+   windowTCmd.SetRange("thickness>=0. && thickness<=10000.");
+   windowTCmd.SetDefaultValue("500.0");
+
+   G4GenericMessenger::Command &windowMatCmd
+      = fMessenger->DeclareMethod("WindowMaterial",
+                                  &BIDetectorConstruction::SetWindowMat, 
+                                  "Set the material of the window.");
+   windowMatCmd.SetParameterName("matName", true);
+
+   G4GenericMessenger::Command &cassetteMatCmd
+      = fMessenger->DeclareMethod("CassetteMaterial",
+                                  &BIDetectorConstruction::SetCassetteMat, 
+                                  "Set the material of the cassette.");
+   cassetteMatCmd.SetParameterName("matName", true);
+
+   G4GenericMessenger::Command &airGapTCmd
+      = fMessenger->DeclareMethodWithUnit("AirGapThickness", "mm",
+                                          &BIDetectorConstruction::SetAirGapT, 
+                                          "Set the thickness of the air gap.");
+   airGapTCmd.SetParameterName("thickness", true);
+   airGapTCmd.SetRange("thickness>=0. && thickness<=50.");
+   airGapTCmd.SetDefaultValue("50.0");
+
+}
+
+void BIDetectorConstruction::SetWindowT(G4double t)
+{
+   G4cout << t << G4endl;
+   fWindowT = t;
+   G4Box *window = (G4Box*)(fWindowPV->GetLogicalVolume()->GetSolid());
+   window->SetZHalfLength(fWindowT / 2.);
+
+   G4ThreeVector sealingPos = G4ThreeVector(0., 0., -(fWindowT + fSealingT) / 2.);
+   fSealingPV->SetTranslation(sealingPos);
+   
+   G4ThreeVector airPos = G4ThreeVector(0., 0., (fWindowT + fAirT) / 2.);
+   fAirPV->SetTranslation(airPos);
+   
+   G4RunManager::GetRunManager()->GeometryHasBeenModified();
+
+   G4UImanager *UImanager = G4UImanager::GetUIpointer();
+   UImanager->ApplyCommand("/geometry/test/run");
+}
+
+void BIDetectorConstruction::SetWindowMat(G4String matName)
+{
+   G4NistManager *manager = G4NistManager::Instance();
+   G4Material *mat;
+   mat = manager->FindOrBuildMaterial(matName);
+   if(mat == nullptr){
+      G4cout << matName << " is not a defined material.\n"
+             << "Window material is not changed." << G4endl;
+      //exit(0);
+   }
+   else{
+      G4LogicalVolume *windowLV = fWindowPV->GetLogicalVolume();
+      G4cout << "The material of window is changed from "
+             << windowLV->GetMaterial()->GetName()
+             << " to " << mat->GetName() <<". "<< G4endl;
+      windowLV->SetMaterial(mat);
+      G4RunManager::GetRunManager()->GeometryHasBeenModified();
+   }
+}
+
+void BIDetectorConstruction::SetCassetteMat(G4String matName)
+{
+   G4NistManager *manager = G4NistManager::Instance();
+   G4Material *mat;
+   mat = manager->FindOrBuildMaterial(matName);
+   if(mat == nullptr){
+      G4cout << matName << " is not a defined material.\n"
+             << "Cassette material is not changed." << G4endl;
+      //exit(0);
+   }
+   else{
+      G4LogicalVolume *cassetteLV = fCassettePV->GetLogicalVolume();
+      G4cout << "The material of cassette is changed from "
+             << cassetteLV->GetMaterial()->GetName()
+             << " to " << mat->GetName() <<". "<< G4endl;
+      cassetteLV->SetMaterial(mat);
+      G4RunManager::GetRunManager()->GeometryHasBeenModified();
+   }
+}
+
+void BIDetectorConstruction::SetAirGapT(G4double t)
+{
+   G4cout << t << G4endl;
+   fAirGap = t;
+   G4double plateZ = -fAirT / 2. + fAirGap + (fWellH + fPlateT) / 2.;
+   G4ThreeVector platePos = G4ThreeVector(0., 0., plateZ);
+   fPlatePV->SetTranslation(platePos);
+   
+   G4double filmZ = plateZ + fPlateH / 2. + fFilmT / 2.;
+   G4ThreeVector filmPos = G4ThreeVector(0., 0., filmZ);
+   fFilmPV->SetTranslation(filmPos);
+
+   G4RunManager::GetRunManager()->GeometryHasBeenModified();
+
+   G4UImanager *UImanager = G4UImanager::GetUIpointer();
+   UImanager->ApplyCommand("/geometry/test/run");
+}

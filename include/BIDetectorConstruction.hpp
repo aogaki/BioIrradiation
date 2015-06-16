@@ -9,6 +9,7 @@
 #include "G4Material.hh"
 #include "G4VisAttributes.hh"
 #include "G4LogicalVolume.hh"
+#include "G4GenericMessenger.hh"
 
 
 class BIDetectorConstruction : public G4VUserDetectorConstruction
@@ -20,10 +21,28 @@ public:
    virtual G4VPhysicalVolume *Construct();
    virtual void ConstructSDandField();
 
+   // UI Commands
+   void SetWindowT(G4double t);
+   void SetWindowMat(G4String matName);
+   void SetCassetteMat(G4String matName);
+   void SetAirGapT(G4double t);
+   
 private:
    G4LogicalVolume *fWorldLV;
    G4bool fCheckOverlap;
 
+   // Commands
+   void DefineCommands();
+   G4GenericMessenger *fMessenger;
+   G4VPhysicalVolume *fWindowPV;
+   G4VPhysicalVolume *fAirPV;
+   G4VPhysicalVolume *fSealingPV;
+   G4VPhysicalVolume *fHolderPV;
+   G4VPhysicalVolume *fPlatePV;
+   G4VPhysicalVolume *fFilmPV;
+   G4VPhysicalVolume *fCassettePV;
+
+   // Materials
    void DefineMaterial();
    G4Material *fVacuum;
    G4Material *fAir;
@@ -38,12 +57,15 @@ private:
    
    // Geometries
    // Do I really need all members? too much?
+   void DefineGeoPar();
+   
    G4LogicalVolume *ConstructPlate();
    G4double fPlateT;
    G4double fPlateL;
    G4double fPlateW;
    G4double fPlateH;
-
+   G4double fAirGap;
+   
    G4LogicalVolume *ConstructFilm();
    G4double fFilmT;
    G4double fFilmL;
@@ -65,10 +87,19 @@ private:
    G4double fCassetteBottomT;
 
    G4LogicalVolume *ConstructHolder();
+   G4LogicalVolume *ConstructSimpleHolder();
    G4double fHolderL;
    G4double fHolderW;
    G4double fHolderT;
 
+   G4double fBumpT;
+   G4double fBumpW;
+
+   // Holder and Cassette are at air layer
+   G4double fAirL;
+   G4double fAirW;
+   G4double fAirT;
+   
    G4LogicalVolume *ConstructWindow();
    G4double fWindowL;
    G4double fWindowW;

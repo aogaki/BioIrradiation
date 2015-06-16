@@ -28,7 +28,7 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
    G4int nPar = 1;
    fProtonGun = new G4ParticleGun(nPar);
 
-   fZPosition = -20.*mm;
+   fZPosition = -100.*mm;
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
 
    G4ParticleDefinition *proton = parTable->FindParticle("proton");
@@ -36,6 +36,9 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
    fProtonGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
    fProtonGun->SetParticleEnergy(50.*MeV);
+
+   fComponent1 = 0.7542*MeV;
+   fComponent2 = 0.0935*MeV;
 }
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
@@ -46,14 +49,19 @@ BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 {
    G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
-   
-   G4ThreeVector particleVec = GetParVec();
-   particleVec = G4ThreeVector(0, 0, 1);
+
+   G4double coneTheta = 30.*deg;
+   G4ThreeVector particleVec = GetParVec(coneTheta);
    fProtonGun->SetParticleMomentumDirection(particleVec);
 
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
 
-   G4double ene = 20.*MeV;
+   G4double ene;
+   while(1){
+      ene = CLHEP::RandExponential::shoot(fComponent1)
+            + CLHEP::RandExponential::shoot(fComponent2);
+      if(ene <= 30.*MeV) break;
+   }
    fProtonGun->SetParticleEnergy(ene);
    fProtonGun->GeneratePrimaryVertex(event);
 
@@ -70,10 +78,9 @@ void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 
 }
 
-G4ThreeVector BIPrimaryGeneratorAction::GetParVec()
+G4ThreeVector BIPrimaryGeneratorAction::GetParVec(G4double limit)
 {
-   G4double angleLimit = CLHEP::pi;
-   G4double theta = acos(1. - G4UniformRand() * (1. - cos(angleLimit)));
+   G4double theta = acos(1. - G4UniformRand() * (1. - cos(limit)));
    G4double phi = G4UniformRand() * 2. * CLHEP::pi;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);

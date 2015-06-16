@@ -19,10 +19,12 @@ public:
    virtual void GeneratePrimaries(G4Event *);
 
 private:
-   G4ThreeVector GetParVec();
+   G4ThreeVector GetParVec(G4double limit);
    G4ParticleGun *fProtonGun;
 
    G4double fZPosition;
+   G4double fComponent1;
+   G4double fComponent2;
 };
 
 #endif

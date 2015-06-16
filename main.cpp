@@ -36,7 +36,7 @@ namespace
    {
       G4cerr << " Usage: " << G4endl;
       G4cerr << " ./LG [-m macro filename]\n"
-             << " -a Show all trajectory (default show only gamma)\n"
+             << " -a Show all trajectory (default show only ploton)\n"
              << G4endl;
    }
 }
