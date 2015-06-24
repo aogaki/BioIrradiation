@@ -55,40 +55,53 @@ void BIEventAction::EndOfEventAction(const G4Event *event)
    G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
 
    const G4int kHit = hitsCollection->entries();
+   G4bool CellHit = false;
+   /*
    for (G4int iHit = 0; iHit < kHit; iHit++) {
       BICommonHit *newHit = (*hitsCollection)[iHit];
-
-      G4int isLast = newHit->GetIsLast();
-      G4String volumeName = newHit->GetVolumeName();
-      if(isLast == 0 && volumeName != "Cell") continue;
-
-      anaMan->FillNtupleIColumn(0, 11, isLast);
-      anaMan->FillNtupleSColumn(0, 4, volumeName);
-
-      anaMan->FillNtupleIColumn(0, 0, eventID); // EventID
-
-      G4int pdgCode = newHit->GetPDGCode();
-      anaMan->FillNtupleIColumn(0, 1, pdgCode);
-
-      G4double depositEnergy = newHit->GetDepositEnergy();
-      anaMan->FillNtupleDColumn(0, 2, depositEnergy);
-
-      G4double time = newHit->GetTime();
-      anaMan->FillNtupleDColumn(0, 3, time);
-
-
-      G4ThreeVector position = newHit->GetPosition();
-      anaMan->FillNtupleDColumn(0, 5, position.x());
-      anaMan->FillNtupleDColumn(0, 6, position.y());
-      anaMan->FillNtupleDColumn(0, 7, position.z());
-
-      G4ThreeVector momentum = newHit->GetMomentum();
-      anaMan->FillNtupleDColumn(0, 8, momentum.x());
-      anaMan->FillNtupleDColumn(0, 9, momentum.y());
-      anaMan->FillNtupleDColumn(0, 10, momentum.z());
-
-      anaMan->AddNtupleRow(0);
+      G4String name = newHit->GetVolumeName();
+      G4double ene = newHit->GetDepositEnergy();
+      if(name.contains("Cell") && ene > 0.){
+         CellHit = true;
+         break;
+      }
    }
+*/
+   CellHit = true;
+   if(CellHit){
+      for (G4int iHit = 0; iHit < kHit; iHit++) {
+         BICommonHit *newHit = (*hitsCollection)[iHit];
 
+         G4int isLast = newHit->GetIsLast();
+         G4String volumeName = newHit->GetVolumeName();
+
+         anaMan->FillNtupleIColumn(0, 11, isLast);
+         anaMan->FillNtupleSColumn(0, 4, volumeName);
+
+         anaMan->FillNtupleIColumn(0, 0, eventID); // EventID
+
+         G4int pdgCode = newHit->GetPDGCode();
+         anaMan->FillNtupleIColumn(0, 1, pdgCode);
+
+         G4double depositEnergy = newHit->GetDepositEnergy();
+         anaMan->FillNtupleDColumn(0, 2, depositEnergy);
+
+         G4double time = newHit->GetTime();
+         anaMan->FillNtupleDColumn(0, 3, time);
+
+
+         G4ThreeVector position = newHit->GetPosition();
+         anaMan->FillNtupleDColumn(0, 5, position.x());
+         anaMan->FillNtupleDColumn(0, 6, position.y());
+         anaMan->FillNtupleDColumn(0, 7, position.z());
+
+         G4ThreeVector momentum = newHit->GetMomentum();
+         anaMan->FillNtupleDColumn(0, 8, momentum.x());
+         anaMan->FillNtupleDColumn(0, 9, momentum.y());
+         anaMan->FillNtupleDColumn(0, 10, momentum.z());
+
+         anaMan->AddNtupleRow(0);
+      }
+   }
 }
 

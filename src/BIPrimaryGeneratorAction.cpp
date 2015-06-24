@@ -1,3 +1,4 @@
+#include <fstream>
 #include <math.h>
 
 #include "G4Event.hh"
@@ -23,12 +24,14 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
    : G4VUserPrimaryGeneratorAction(),
      fProtonGun(0)
 {
+   ReadTable();
+   
    G4AutoLock lock(&mutexInPGA);
 
    G4int nPar = 1;
    fProtonGun = new G4ParticleGun(nPar);
 
-   fZPosition = -100.*mm;
+   fZPosition = -300.*mm;
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
 
    G4ParticleDefinition *proton = parTable->FindParticle("proton");
@@ -36,9 +39,6 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
    fProtonGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
    fProtonGun->SetParticleEnergy(50.*MeV);
-
-   fComponent1 = 0.7542*MeV;
-   fComponent2 = 0.0935*MeV;
 }
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
@@ -46,22 +46,35 @@ BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
    delete fProtonGun;
 }
 
+void BIPrimaryGeneratorAction::ReadTable()
+{
+   std::ifstream fin("ProtonEnergy.dat");
+   if(!fin){
+      G4cout << "Proton energy file can not be opened." << G4endl;
+      for(auto &ene: fEnergyTable) ene = 20.;
+   }
+   else{
+      G4int it = 0;
+      while(1){
+         G4double ene;
+         fin >> ene;
+         if(fin.eof()) break;
+         fEnergyTable[it++] = ene;
+      }
+   }
+}
+
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 {
    G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
 
-   G4double coneTheta = 30.*deg;
+   G4double coneTheta = 15.*deg;
    G4ThreeVector particleVec = GetParVec(coneTheta);
    fProtonGun->SetParticleMomentumDirection(particleVec);
 
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
 
-   G4double ene;
-   while(1){
-      ene = CLHEP::RandExponential::shoot(fComponent1)
-            + CLHEP::RandExponential::shoot(fComponent2);
-      if(ene <= 30.*MeV) break;
-   }
+   G4double ene = fEnergyTable[event->GetEventID()];// check array size!
    fProtonGun->SetParticleEnergy(ene);
    fProtonGun->GeneratePrimaryVertex(event);
 

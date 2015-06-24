@@ -23,8 +23,9 @@ private:
    G4ParticleGun *fProtonGun;
 
    G4double fZPosition;
-   G4double fComponent1;
-   G4double fComponent2;
+
+   void ReadTable();
+   G4double fEnergyTable[100000000];
 };
 
 #endif

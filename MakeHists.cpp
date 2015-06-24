@@ -1,76 +1,75 @@
 #include <iostream>
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TH3D.h"
-#include "TH2D.h"
-#include "TVector3.h"
+#include <TChain.h>
+#include <TVector3.h>
+#include <TFile.h>
+#include <TH2.h>
+#include <TCanvas.h>
 
 
-TH3D *HisPosition;
-TH2D *HisDose;
-TH2D *HisWindow;
-TH2D *HisGap;
-TH2D *HisPlate;
+TH2D *HisCell;
+
+void DefineHists()
+{
+   Double_t plateL = 125.;
+   Double_t plateW = 82.4;
+   //Double_t binW = 0.02;
+   Double_t binW = 0.1;
+   HisCell = new TH2D("HisCell", "Deposited Energy at Cell Layer",
+                      (plateL / binW), -plateL / 2, plateL / 2,
+                      (plateW / binW), -plateW / 2, plateW / 2);
+   HisCell->SetXTitle("[mm]");
+   HisCell->SetYTitle("[mm]");
+   HisCell->SetZTitle("Deposited Energy [MeV]");
+}
 
 void MakeHists()
 {
-   HisPosition = new TH3D("HisPosition", "spatial distribution",
-                          101, -50.5, 50.5, 101, -50.5, 50.5,
-                          130, 0., 13.0);
-
-   HisDose = new TH2D("HisDose", "energy distribution",
-                      101, -50.5, 50.5, 101, -50.5, 50.5);
-
-   HisWindow = new TH2D("HisWindow", "spatial distribution",
-                        101, -50.5, 50.5, 101, -50.5, 50.5);
-
-   HisGap = new TH2D("HisGap", "spatial distribution",
-                     101, -50.5, 50.5, 101, -50.5, 50.5);
-
-   HisPlate = new TH2D("HisPlate", "spatial distribution",
-                       101, -50.5, 50.5, 101, -50.5, 50.5);
-
+   DefineHists();
    
-   TFile *inputFile = new TFile("sum.root", "READ");
-   TTree *inputTree = (TTree*)inputFile->Get("BI");
+   TChain *chain = new TChain("BI");;
+   chain->Add("/media/aogaki/Data/BI/*.root");
 
-   Int_t PDG;
-   inputTree->SetBranchAddress("PDGCode", &PDG);
-
-   Double_t depEne; // deposit energy
-   inputTree->SetBranchAddress("DepositEnergy", &depEne);
-
-   Double_t time;
-   inputTree->SetBranchAddress("Time", &time);
-
-   Char_t volumeName[256]; // Array size is enough?
-   inputTree->SetBranchAddress("VolumeName", volumeName);
+   chain->SetBranchStatus("*", 0);
 
    TVector3 position;
-   inputTree->SetBranchAddress("x", &position[0]);
-   inputTree->SetBranchAddress("y", &position[1]);
-   inputTree->SetBranchAddress("z", &position[2]);
+   chain->SetBranchStatus("x", 1);
+   chain->SetBranchStatus("y", 1);
+   chain->SetBranchStatus("z", 1);
+   chain->SetBranchAddress("x", &position[0]);
+   chain->SetBranchAddress("y", &position[1]);
+   chain->SetBranchAddress("z", &position[2]);
+   
+   Char_t volumeName[256]; // Array size is enough?
+   chain->SetBranchStatus("VolumeName", 1);
+   chain->SetBranchAddress("VolumeName", volumeName);
 
-   TVector3 momentum;
-   inputTree->SetBranchAddress("vx", &momentum[0]);
-   inputTree->SetBranchAddress("vy", &momentum[1]);
-   inputTree->SetBranchAddress("vz", &momentum[2]);
+   Double_t ene;
+   chain->SetBranchStatus("DepositEnergy", 1);
+   chain->SetBranchAddress("DepositEnergy", &ene);
 
-   const Int_t kEve = inputTree->GetEntries();
-   for(Int_t iEve = 0; iEve < kEve; iEve++){
-      inputTree->GetEntry(iEve);
-
-      HisPosition->Fill(position.x(), position.y(), position.z());
-      if(TString(volumeName) == "Window")
-         HisWindow->Fill(position.x(), position.y(), position.z());
-      else if(TString(volumeName) == "AirGap")
-         HisGap->Fill(position.x(), position.y());
-      else if(TString(volumeName) == "Plate")
-         HisPlate->Fill(position.x(), position.y());
-      else if(TString(volumeName) == "Cell")
-         HisDose->Fill(position.x(), position.y(), depEne);
+   const Int_t kTree = chain->GetNtrees();
+   Int_t reachTree[kTree];
+   for(auto &flag: reachTree) flag = 0;
+   Int_t reachEvent[1000000];
+   for(auto &flag: reachEvent) flag = 0;
+   
+   const Int_t kEntry = chain->GetEntries();
+   cout << kEntry << endl;
+   for(Int_t iEntry = 0; iEntry < kEntry; iEntry++){
+      if(iEntry%10000 == 0) cout << iEntry <<" / "<< kEntry << endl;
+      chain->GetEntry(iEntry);
+      if(TString(volumeName) == "Cell"){
+         //cout << position.X() <<"\t" << position.Y() << endl;
+         HisCell->Fill(position.X(), position.Y(), ene);
+      }
    }
 
-   HisPlate->Draw("COLZ");
+   TCanvas *canvas = new TCanvas();
+   HisCell->Draw("COLZ");
+   canvas->Print("tmp.pdf", "pdf");
+   
+   TFile *outputFile = new TFile("tmp.root", "RECREATE");
+   HisCell->Write();
+   outputFile->Close();
 }

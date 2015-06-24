@@ -1,10 +1,13 @@
 #include <TGraphErrors.h>
+#include <TF1.h>
 
 TGraphErrors *Al500;
 TGraphErrors *Al2000;
 TGraphErrors *Al6000;
 
-TF1 *FitFnc = new TF1("FitFnc", "expo(0)+expo(2)", 1., 30.);
+//TF1 *FitFnc = new TF1("FitFnc", "expo(0)+expo(2)", 1., 30.);
+TF1 *FitFnc = new TF1("FitFnc", "expo(0)+expo(2)+gaus(4)", 1., 31.);
+//TF1 *FitFnc = new TF1("FitFnc", "expo(0)+expo(2)+landau(4)", 1., 30.);
 
 void ProtonProfile()
 {
@@ -25,4 +28,8 @@ void ProtonProfile()
    Al500 = new TGraphErrors(14, xAl500, yAl500, xe, eAl500);   
    Al2000 = new TGraphErrors(14, xAl2000, yAl2000, xe, eAl2000);   
    Al6000 = new TGraphErrors(14, xAl6000, yAl6000, xe, eAl6000);   
+
+   Al6000->Draw();
+   FitFnc->SetParameters(26.54, -0.75, 22.02, -0.093, 10e9, 10, 2);
+   Al6000->Fit("FitFnc", "R");
 }

@@ -64,10 +64,11 @@ void BIDetectorConstruction::DefineGeoPar()
    fWellBottom = 6.39*mm; // inner size
    fWellH = 10.9*mm; // inner size
 
-   fCellT = 150.*nm;
+   //fCellT = 150.*nm;
+   fCellT = 20.*um;
       
-   //fPlateT = 1.*mm; // temporary
-   fPlateT = 0.3*mm; // temporary
+   fPlateT = 1.*mm; // temporary
+   //fPlateT = 0.3*mm; // temporary
    fPlateL = 125.*mm; // temporary
    fPlateW = 82.4*mm; // temporary
    //fPlateH = 14.6*mm; // temporary
