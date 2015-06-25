@@ -59,111 +59,35 @@ Int_t XYtoIndex(Double_t x, Double_t y)
    return (wellX + wellY * 12);
 }
 
-void DefineHists()
+void GetHists(TFile *file)
 {
-   const Double_t areaL = 200.;
-   const Double_t areaW = 140.;
-   
-   const Double_t plateL = 125.;
-   const Double_t plateW = 82.4;
-   //Double_t binW = 0.02;
-   const Double_t binW = 0.1;
-   HisCell = new TH2D("HisCell", "Deposited Energy at Cell Layer",
-                      (plateL / binW), -plateL / 2, plateL / 2,
-                      (plateW / binW), -plateW / 2, plateW / 2);
-   HisCell->SetXTitle("[mm]");
-   HisCell->SetYTitle("[mm]");
-   HisCell->SetZTitle("Deposited Energy [MeV]");
-
-   HisAll = new TH3D("HisAll", "Deposited Energy",
-                     Int_t(areaL), -areaL / 2., areaL / 2.,
-                     Int_t(areaW), -areaW / 2., areaW / 2.,
-                     450, -10., 35.);
-   HisAll->SetXTitle("[mm]");
-   HisAll->SetYTitle("[mm]");
-   HisAll->SetZTitle("[mm]");
-
-   HisSealing = new TH3D("HisSealing", "Deposited Energy at Sealing",
-                         Int_t(areaL), -areaL / 2., areaL / 2.,
-                         Int_t(areaW), -areaW / 2., areaW / 2.,
-                         60, -6., 0.);
-   HisSealing->SetXTitle("[mm]");
-   HisSealing->SetYTitle("[mm]");
-   HisSealing->SetZTitle("[mm]");
-
-   HisWindow = new TH3D("HisWindow", "Deposited Energy at Window",
-                        Int_t(areaL), -areaL / 2., areaL / 2.,
-                        Int_t(areaW), -areaW / 2., areaW / 2.,
-                        20, -1., 1.);
-   HisWindow->SetXTitle("[mm]");
-   HisWindow->SetYTitle("[mm]");
-   HisWindow->SetZTitle("[mm]");
-
-   HisHolder = new TH3D("HisHolder", "Deposited Energy at Holder",
-                        Int_t(areaL), -areaL / 2., areaL / 2.,
-                        Int_t(areaW), -areaW / 2., areaW / 2.,
-                        30, 0., 3.);
-   HisHolder->SetXTitle("[mm]");
-   HisHolder->SetYTitle("[mm]");
-   HisHolder->SetZTitle("[mm]");
-
-   HisCassette = new TH3D("HisCassette", "Deposited Energy at Cassette",
-                          Int_t(areaL), -areaL / 2., areaL / 2.,
-                          Int_t(areaW), -areaW / 2., areaW / 2.,
-                          300, 0., 30.);
-   HisCassette->SetXTitle("[mm]");
-   HisCassette->SetYTitle("[mm]");
-   HisCassette->SetZTitle("[mm]");
-
-   HisAir = new TH3D("HisAir", "Deposited Energy at Air",
-                          Int_t(areaL), -areaL / 2., areaL / 2.,
-                          Int_t(areaW), -areaW / 2., areaW / 2.,
-                          300, 0., 30.);
-   HisAir->SetXTitle("[mm]");
-   HisAir->SetYTitle("[mm]");
-   HisAir->SetZTitle("[mm]");
-
-   HisPlate = new TH3D("HisPlate", "Deposited Energy at Plate",
-                          Int_t(areaL), -areaL / 2., areaL / 2.,
-                          Int_t(areaW), -areaW / 2., areaW / 2.,
-                          300, 0., 30.);
-   HisPlate->SetXTitle("[mm]");
-   HisPlate->SetYTitle("[mm]");
-   HisPlate->SetZTitle("[mm]");
-
-   HisFilm = new TH3D("HisFilm", "Deposited Energy at Film",
-                          Int_t(areaL), -areaL / 2., areaL / 2.,
-                          Int_t(areaW), -areaW / 2., areaW / 2.,
-                          300, 0., 30.);
-   HisFilm->SetXTitle("[mm]");
-   HisFilm->SetYTitle("[mm]");
-   HisFilm->SetZTitle("[mm]");
-
-   HisWell = new TH3D("HisWell", "Deposited Energy at Well",
-                          Int_t(areaL), -areaL / 2., areaL / 2.,
-                          Int_t(areaW), -areaW / 2., areaW / 2.,
-                          300, 0., 30.);
-   HisWell->SetXTitle("[mm]");
-   HisWell->SetYTitle("[mm]");
-   HisWell->SetZTitle("[mm]");
+   HisCell = (TH2D*)file->Get("HisCell");
+   HisAll = (TH3D*)file->Get("HisAll");
+   HisSealing = (TH3D*)file->Get("HisSealing");
+   HisWindow = (TH3D*)file->Get("HisWindow");
+   HisHolder = (TH3D*)file->Get("HisHolder");
+   HisCassette = (TH3D*)file->Get("HisCassette");
+   HisAir = (TH3D*)file->Get("HisAir");
+   HisPlate = (TH3D*)file->Get("HisPlate");
+   HisFilm = (TH3D*)file->Get("HisFilm");
+   HisWell = (TH3D*)file->Get("HisWell");
 
    const Double_t wellPitch = 9.;
    UInt_t hisIt = 0;
    for(Double_t y = -36.; y < 32.; y += 9.){
       for(Double_t x = -54.; x < 50.; x += 9.){
          TString name = "His" + XYtoWell(x, y);
-         TString title = "Deposited Energy at " + XYtoWell(x, y);
-         HisEachCell[hisIt++] = new TH2D(name, title,
-                                         Int_t(wellPitch / binW), x, x + wellPitch,
-                                         Int_t(wellPitch / binW), y, y + wellPitch);
+         HisEachCell[hisIt++] = (TH2D*)file->Get(name);
       }
    }
    
 }
 
-void MakeHists()
+void FillHists()
 {
-   DefineHists();
+   TFile *inputFile = new TFile("tmp.root");
+
+   GetHists(inputFile);
 
    TChain *chain = new TChain("BI");
    //chain->Add("/media/aogaki/Data/BI/*.root");
@@ -190,7 +114,7 @@ void MakeHists()
    const Int_t kEntry = chain->GetEntries();
    cout << kEntry << endl;
    for(Int_t iEntry = 0; iEntry < kEntry; iEntry++){
-      //if(iEntry%100000 == 0) cout << iEntry <<" / "<< kEntry << endl;
+      if(iEntry%100000 == 0) cout << iEntry <<" / "<< kEntry << endl;
       chain->GetEntry(iEntry);
       if(!(ene > 0.)) continue;
       
@@ -214,19 +138,16 @@ void MakeHists()
          HisFilm->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Stuff")
          HisWell->Fill(position.X(), position.Y(), position.Z(), ene);
+
       else if(TString(volumeName) == "Cell"){
          HisCell->Fill(position.X(), position.Y(), ene);
          Int_t wellID = XYtoIndex(position.X(), position.Y());
          HisEachCell[wellID]->Fill(position.X(), position.Y(), ene);
       }
-   }
-/*
-   TCanvas *canvas = new TCanvas();
-   HisCell->Draw("COLZ");
-   canvas->Print("tmp.pdf", "pdf"); 
-*/
 
-   TFile *outputFile = new TFile("tmp.root", "RECREATE");
+   }
+
+   TFile *outputFile = new TFile("out.root", "RECREATE");
    
    HisAll->Write();
    HisSealing->Write();
@@ -240,6 +161,13 @@ void MakeHists()
    HisCell->Write();
    for(Int_t i = 0; i < 96; i++)
       HisEachCell[i]->Write();
+
+   outputFile->Close();
+   
+   inputFile->Close();
+   /*
+   TFile *outputFile = new TFile("tmp.root", "RECREATE");
    
    outputFile->Close();
+*/
 }

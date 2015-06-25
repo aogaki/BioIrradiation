@@ -37,12 +37,18 @@ void BIRunAction::BeginOfRunAction(const G4Run *)
     anaMan->CreateNtupleDColumn(0, "y");
     anaMan->CreateNtupleDColumn(0, "z");
 
+    anaMan->CreateNtupleDColumn(0, "preX");
+    anaMan->CreateNtupleDColumn(0, "preY");
+    anaMan->CreateNtupleDColumn(0, "preZ");
+
     anaMan->CreateNtupleDColumn(0, "vx");
     anaMan->CreateNtupleDColumn(0, "vy");
     anaMan->CreateNtupleDColumn(0, "vz");
 
     anaMan->CreateNtupleIColumn(0, "IsLast");
-        
+
+    anaMan->CreateNtupleIColumn(0, "TrackID");
+    
     anaMan->CreateNtuple("InitPar", "Initial Parameters");
     anaMan->CreateNtupleIColumn(1, "PDGCode");
     anaMan->CreateNtupleDColumn(1, "TotalEnergy");

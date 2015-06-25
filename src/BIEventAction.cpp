@@ -72,12 +72,6 @@ void BIEventAction::EndOfEventAction(const G4Event *event)
       for (G4int iHit = 0; iHit < kHit; iHit++) {
          BICommonHit *newHit = (*hitsCollection)[iHit];
 
-         G4int isLast = newHit->GetIsLast();
-         G4String volumeName = newHit->GetVolumeName();
-
-         anaMan->FillNtupleIColumn(0, 11, isLast);
-         anaMan->FillNtupleSColumn(0, 4, volumeName);
-
          anaMan->FillNtupleIColumn(0, 0, eventID); // EventID
 
          G4int pdgCode = newHit->GetPDGCode();
@@ -89,17 +83,30 @@ void BIEventAction::EndOfEventAction(const G4Event *event)
          G4double time = newHit->GetTime();
          anaMan->FillNtupleDColumn(0, 3, time);
 
+         G4String volumeName = newHit->GetVolumeName();
+         anaMan->FillNtupleSColumn(0, 4, volumeName);
 
          G4ThreeVector position = newHit->GetPosition();
          anaMan->FillNtupleDColumn(0, 5, position.x());
          anaMan->FillNtupleDColumn(0, 6, position.y());
          anaMan->FillNtupleDColumn(0, 7, position.z());
 
-         G4ThreeVector momentum = newHit->GetMomentum();
-         anaMan->FillNtupleDColumn(0, 8, momentum.x());
-         anaMan->FillNtupleDColumn(0, 9, momentum.y());
-         anaMan->FillNtupleDColumn(0, 10, momentum.z());
+         G4ThreeVector prePosition = newHit->GetPrePosition();
+         anaMan->FillNtupleDColumn(0, 8, prePosition.x());
+         anaMan->FillNtupleDColumn(0, 9, prePosition.y());
+         anaMan->FillNtupleDColumn(0, 10, prePosition.z());
 
+         G4ThreeVector momentum = newHit->GetMomentum();
+         anaMan->FillNtupleDColumn(0, 11, momentum.x());
+         anaMan->FillNtupleDColumn(0, 12, momentum.y());
+         anaMan->FillNtupleDColumn(0, 13, momentum.z());
+
+         G4int isLast = newHit->GetIsLast();
+         anaMan->FillNtupleIColumn(0, 14, isLast);
+
+         G4int trackID = newHit->GetTrackID();
+         anaMan->FillNtupleIColumn(0, 15, trackID);
+         
          anaMan->AddNtupleRow(0);
       }
    }

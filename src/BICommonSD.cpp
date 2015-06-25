@@ -38,7 +38,7 @@ G4bool BICommonSD::ProcessHits(G4Step *step, G4TouchableHistory */*history*/)
    BICommonHit *newHit = new BICommonHit();
 
    G4Track *track = step->GetTrack();
-
+   
    G4StepPoint *preStepPoint = step->GetPreStepPoint();
    G4String volumeName = preStepPoint->GetPhysicalVolume()->GetName();
    newHit->SetVolumeName(volumeName);
@@ -47,8 +47,14 @@ G4bool BICommonSD::ProcessHits(G4Step *step, G4TouchableHistory */*history*/)
    G4int pdgCode = particle->GetPDGEncoding();
    newHit->SetPDGCode(pdgCode);
 
+   G4int trackID = track->GetTrackID();
+   newHit->SetTrackID(trackID);
+   
    G4double depositEnergy = step->GetTotalEnergyDeposit();
    newHit->SetDepositEnergy(depositEnergy);
+
+   G4double kineticEnergy = track->GetKineticEnergy();
+   newHit->SetKineticEnergy(kineticEnergy);
 
    G4StepPoint *postStepPoint = step->GetPostStepPoint();
    G4double time = postStepPoint->GetGlobalTime();
@@ -57,12 +63,15 @@ G4bool BICommonSD::ProcessHits(G4Step *step, G4TouchableHistory */*history*/)
    G4ThreeVector position =  postStepPoint->GetPosition();
    newHit->SetPosition(position);
    
+   G4ThreeVector prePosition =  preStepPoint->GetPosition();
+   newHit->SetPrePosition(prePosition);
+   
    G4ThreeVector momentum =  postStepPoint->GetMomentum();
    newHit->SetMomentum(momentum);
 
    G4int isLast = (G4int)step->IsLastStepInVolume();
    newHit->SetIsLast(isLast);
-   
+
    fHitsCollection->insert(newHit);
    return true;
 }

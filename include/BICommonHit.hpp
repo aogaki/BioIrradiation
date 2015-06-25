@@ -21,11 +21,17 @@ public:
    inline void  operator delete(void *);
 
    // add setter/getter methods
+   void SetTrackID(G4int id) {fTrackID = id;};
+   G4int GetTrackID() {return fTrackID;};
+
    void SetPDGCode(G4int code) {fPDGCode = code;};
    G4int GetPDGCode() {return fPDGCode;};
 
    void SetDepositEnergy(G4double ene) {fDepositEnergy = ene;};
    G4double GetDepositEnergy() {return fDepositEnergy;};
+
+   void SetKineticEnergy(G4double ene) {fKineticEnergy = ene;};
+   G4double GetKineticEnergy() {return fKineticEnergy;};
 
    void SetTime(G4double time) {fTime = time;};
    G4double GetTime() {return fTime;};
@@ -36,6 +42,9 @@ public:
    void SetPosition(G4ThreeVector pos) {fPosition = pos;};
    G4ThreeVector GetPosition() {return fPosition;};
    
+   void SetPrePosition(G4ThreeVector pos) {fPrePosition = pos;};
+   G4ThreeVector GetPrePosition() {return fPrePosition;};
+   
    void SetMomentum(G4ThreeVector p) {fMomentum = p;};
    G4ThreeVector GetMomentum() {return fMomentum;};
    
@@ -43,11 +52,14 @@ public:
    G4int GetIsLast() {return fIsLastStep;};
 
 private:
+   G4int fTrackID;
    G4int fPDGCode;
    G4double fDepositEnergy;
+   G4double fKineticEnergy;
    G4double fTime;
    G4String fVolumeName;
    G4ThreeVector fPosition;
+   G4ThreeVector fPrePosition;
    G4ThreeVector fMomentum;
    G4int fIsLastStep;
       
