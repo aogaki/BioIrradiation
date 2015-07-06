@@ -37,40 +37,39 @@ G4bool BICommonSD::ProcessHits(G4Step *step, G4TouchableHistory */*history*/)
    // Recording all steps.  Huge file size!
    BICommonHit *newHit = new BICommonHit();
 
-   G4Track *track = step->GetTrack();
-   
    G4StepPoint *preStepPoint = step->GetPreStepPoint();
    G4String volumeName = preStepPoint->GetPhysicalVolume()->GetName();
    newHit->SetVolumeName(volumeName);
 
-   G4ParticleDefinition *particle = track->GetDefinition();
-   G4int pdgCode = particle->GetPDGEncoding();
-   newHit->SetPDGCode(pdgCode);
+   //G4Track *track = step->GetTrack();   
+   //G4ParticleDefinition *particle = track->GetDefinition();
+   //G4int pdgCode = particle->GetPDGEncoding();
+   //newHit->SetPDGCode(pdgCode);
 
-   G4int trackID = track->GetTrackID();
-   newHit->SetTrackID(trackID);
+   //G4int trackID = track->GetTrackID();
+   //newHit->SetTrackID(trackID);
    
    G4double depositEnergy = step->GetTotalEnergyDeposit();
    newHit->SetDepositEnergy(depositEnergy);
 
-   G4double kineticEnergy = track->GetKineticEnergy();
-   newHit->SetKineticEnergy(kineticEnergy);
+   //G4double kineticEnergy = track->GetKineticEnergy();
+   //newHit->SetKineticEnergy(kineticEnergy);
 
    G4StepPoint *postStepPoint = step->GetPostStepPoint();
-   G4double time = postStepPoint->GetGlobalTime();
-   newHit->SetTime(time);
+   //G4double time = postStepPoint->GetGlobalTime();
+   //newHit->SetTime(time);
 
    G4ThreeVector position =  postStepPoint->GetPosition();
    newHit->SetPosition(position);
    
-   G4ThreeVector prePosition =  preStepPoint->GetPosition();
-   newHit->SetPrePosition(prePosition);
+   //G4ThreeVector prePosition =  preStepPoint->GetPosition();
+   //newHit->SetPrePosition(prePosition);
    
-   G4ThreeVector momentum =  postStepPoint->GetMomentum();
-   newHit->SetMomentum(momentum);
+   //G4ThreeVector momentum =  postStepPoint->GetMomentum();
+   //newHit->SetMomentum(momentum);
 
-   G4int isLast = (G4int)step->IsLastStepInVolume();
-   newHit->SetIsLast(isLast);
+   //G4int isLast = (G4int)step->IsLastStepInVolume();
+   //newHit->SetIsLast(isLast);
 
    fHitsCollection->insert(newHit);
    return true;

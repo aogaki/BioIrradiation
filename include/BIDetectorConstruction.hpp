@@ -28,6 +28,8 @@ public:
    void SetAirGapT(G4double t);
    
 private:
+   G4bool fCut;
+   
    G4LogicalVolume *fWorldLV;
    G4bool fCheckOverlap;
 

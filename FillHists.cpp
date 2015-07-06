@@ -19,8 +19,8 @@ TH3D *HisAir;
 TH3D *HisPlate;
 TH3D *HisFilm;
 TH3D *HisWell;
-TH2D *HisCell;
-TH2D *HisEachCell[96];
+TH2D *HisEachCell20[96];
+TH2D *HisEachCell50[96];
 
 TString XYtoWell(Double_t x, Double_t y)
 {
@@ -61,7 +61,6 @@ Int_t XYtoIndex(Double_t x, Double_t y)
 
 void GetHists(TFile *file)
 {
-   HisCell = (TH2D*)file->Get("HisCell");
    HisAll = (TH3D*)file->Get("HisAll");
    HisSealing = (TH3D*)file->Get("HisSealing");
    HisWindow = (TH3D*)file->Get("HisWindow");
@@ -76,8 +75,16 @@ void GetHists(TFile *file)
    UInt_t hisIt = 0;
    for(Double_t y = -36.; y < 32.; y += 9.){
       for(Double_t x = -54.; x < 50.; x += 9.){
-         TString name = "His" + XYtoWell(x, y);
-         HisEachCell[hisIt++] = (TH2D*)file->Get(name);
+         TString name = "His20" + XYtoWell(x, y);
+         HisEachCell20[hisIt++] = (TH2D*)file->Get(name);
+      }
+   }
+
+   hisIt = 0;
+   for(Double_t y = -36.; y < 32.; y += 9.){
+      for(Double_t x = -54.; x < 50.; x += 9.){
+         TString name = "His50" + XYtoWell(x, y);
+         HisEachCell50[hisIt++] = (TH2D*)file->Get(name);
       }
    }
    
@@ -114,7 +121,7 @@ void FillHists()
    const Int_t kEntry = chain->GetEntries();
    cout << kEntry << endl;
    for(Int_t iEntry = 0; iEntry < kEntry; iEntry++){
-      if(iEntry%100000 == 0) cout << iEntry <<" / "<< kEntry << endl;
+      //if(iEntry%100000 == 0) cout << iEntry <<" / "<< kEntry << endl;
       chain->GetEntry(iEntry);
       if(!(ene > 0.)) continue;
       
@@ -140,9 +147,9 @@ void FillHists()
          HisWell->Fill(position.X(), position.Y(), position.Z(), ene);
 
       else if(TString(volumeName) == "Cell"){
-         HisCell->Fill(position.X(), position.Y(), ene);
          Int_t wellID = XYtoIndex(position.X(), position.Y());
-         HisEachCell[wellID]->Fill(position.X(), position.Y(), ene);
+         HisEachCell20[wellID]->Fill(position.X(), position.Y(), ene);
+         HisEachCell50[wellID]->Fill(position.X(), position.Y(), ene);
       }
 
    }
@@ -158,16 +165,13 @@ void FillHists()
    HisPlate->Write();
    HisFilm->Write();
    HisWell->Write();
-   HisCell->Write();
    for(Int_t i = 0; i < 96; i++)
-      HisEachCell[i]->Write();
+      HisEachCell20[i]->Write();
+   for(Int_t i = 0; i < 96; i++)
+      HisEachCell50[i]->Write();
 
    outputFile->Close();
    
    inputFile->Close();
-   /*
-   TFile *outputFile = new TFile("tmp.root", "RECREATE");
-   
-   outputFile->Close();
-*/
+
 }

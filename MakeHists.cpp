@@ -8,6 +8,7 @@
 #include <TH3.h>
 #include <TCanvas.h>
 #include <TString.h>
+#include <TTree.h>
 
 
 TH3D *HisAll;
@@ -19,8 +20,8 @@ TH3D *HisAir;
 TH3D *HisPlate;
 TH3D *HisFilm;
 TH3D *HisWell;
-TH2D *HisCell;
-TH2D *HisEachCell[96];
+TH2D *HisEachCell20[96];
+TH2D *HisEachCell50[96];
 
 TString XYtoWell(Double_t x, Double_t y)
 {
@@ -67,13 +68,6 @@ void DefineHists()
    const Double_t plateL = 125.;
    const Double_t plateW = 82.4;
    //Double_t binW = 0.02;
-   const Double_t binW = 0.1;
-   HisCell = new TH2D("HisCell", "Deposited Energy at Cell Layer",
-                      (plateL / binW), -plateL / 2, plateL / 2,
-                      (plateW / binW), -plateW / 2, plateW / 2);
-   HisCell->SetXTitle("[mm]");
-   HisCell->SetYTitle("[mm]");
-   HisCell->SetZTitle("Deposited Energy [MeV]");
 
    HisAll = new TH3D("HisAll", "Deposited Energy",
                      Int_t(areaL), -areaL / 2., areaL / 2.,
@@ -147,15 +141,29 @@ void DefineHists()
    HisWell->SetYTitle("[mm]");
    HisWell->SetZTitle("[mm]");
 
+
    const Double_t wellPitch = 9.;
+   const Double_t bin20W = 0.02;
    UInt_t hisIt = 0;
    for(Double_t y = -36.; y < 32.; y += 9.){
       for(Double_t x = -54.; x < 50.; x += 9.){
-         TString name = "His" + XYtoWell(x, y);
+         TString name = "His20" + XYtoWell(x, y);
          TString title = "Deposited Energy at " + XYtoWell(x, y);
-         HisEachCell[hisIt++] = new TH2D(name, title,
-                                         Int_t(wellPitch / binW), x, x + wellPitch,
-                                         Int_t(wellPitch / binW), y, y + wellPitch);
+         HisEachCell20[hisIt++] = new TH2D(name, title,
+                                           Int_t(wellPitch / bin20W), x, x + wellPitch,
+                                           Int_t(wellPitch / bin20W), y, y + wellPitch);
+      }
+   }
+   
+   const Double_t bin50W = 0.05;
+   hisIt = 0;
+   for(Double_t y = -36.; y < 32.; y += 9.){
+      for(Double_t x = -54.; x < 50.; x += 9.){
+         TString name = "His50" + XYtoWell(x, y);
+         TString title = "Deposited Energy at " + XYtoWell(x, y);
+         HisEachCell50[hisIt++] = new TH2D(name, title,
+                                           Int_t(wellPitch / bin50W), x, x + wellPitch,
+                                           Int_t(wellPitch / bin50W), y, y + wellPitch);
       }
    }
    
@@ -215,9 +223,9 @@ void MakeHists()
       else if(TString(volumeName) == "Stuff")
          HisWell->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Cell"){
-         HisCell->Fill(position.X(), position.Y(), ene);
          Int_t wellID = XYtoIndex(position.X(), position.Y());
-         HisEachCell[wellID]->Fill(position.X(), position.Y(), ene);
+         HisEachCell20[wellID]->Fill(position.X(), position.Y(), ene);
+         HisEachCell50[wellID]->Fill(position.X(), position.Y(), ene);
       }
    }
 /*
@@ -227,7 +235,7 @@ void MakeHists()
 */
 
    TFile *outputFile = new TFile("tmp.root", "RECREATE");
-   
+
    HisAll->Write();
    HisSealing->Write();
    HisWindow->Write();
@@ -237,9 +245,10 @@ void MakeHists()
    HisPlate->Write();
    HisFilm->Write();
    HisWell->Write();
-   HisCell->Write();
    for(Int_t i = 0; i < 96; i++)
-      HisEachCell[i]->Write();
-   
+      HisEachCell20[i]->Write();
+   for(Int_t i = 0; i < 96; i++)
+      HisEachCell50[i]->Write();
+
    outputFile->Close();
 }

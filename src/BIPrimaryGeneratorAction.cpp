@@ -66,8 +66,6 @@ void BIPrimaryGeneratorAction::ReadTable()
 
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 {
-   G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
-
    G4double coneTheta = 15.*deg;
    G4ThreeVector particleVec = GetParVec(coneTheta);
    fProtonGun->SetParticleMomentumDirection(particleVec);
@@ -77,14 +75,15 @@ void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
    G4double ene = fEnergyTable[event->GetEventID()];// check array size!
    fProtonGun->SetParticleEnergy(ene);
    fProtonGun->GeneratePrimaryVertex(event);
-
+/*
+   G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
    anaMan->FillNtupleIColumn(1, 0, 11);
    anaMan->FillNtupleDColumn(1, 1, ene);
    anaMan->FillNtupleDColumn(1, 2, particleVec.x());
    anaMan->FillNtupleDColumn(1, 3, particleVec.y());
    anaMan->FillNtupleDColumn(1, 4, particleVec.z());
    anaMan->AddNtupleRow(1);
-
+*/
    G4AutoLock lock(&mutexInPGA);
    if (nEveInPGA++ % 10000 == 0)
       G4cout << nEveInPGA - 1 << " events done" << G4endl;

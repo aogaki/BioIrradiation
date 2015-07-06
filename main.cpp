@@ -82,7 +82,7 @@ int main(int argc, char **argv)
    //G4VModularPhysicsList *physicsList = new QGSP_BERT_HP;
    G4VModularPhysicsList *physicsList = new Shielding;
    //G4VModularPhysicsList *physicsList = new BIPhysicsList;
-   physicsList->SetVerboseLevel(1);
+   physicsList->SetVerboseLevel(0);
    //physicsList->SetCutValue(1.*um, "proton");
    //physicsList->SetCuts();
    //physicsList->SetDefaultCutValue(100.*um);
