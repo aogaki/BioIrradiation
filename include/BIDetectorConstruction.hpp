@@ -24,6 +24,8 @@ public:
    // UI Commands
    void SetWindowT(G4double t);
    void SetWindowMat(G4String matName);
+   void SetFoilT(G4double t);
+   void SetFoilMat(G4String matName);
    void SetCassetteMat(G4String matName);
    void SetAirGapT(G4double t);
    
@@ -37,6 +39,7 @@ private:
    void DefineCommands();
    G4GenericMessenger *fMessenger;
    G4VPhysicalVolume *fWindowPV;
+   G4VPhysicalVolume *fFoilPV;
    G4VPhysicalVolume *fAirPV;
    G4VPhysicalVolume *fSealingPV;
    G4VPhysicalVolume *fHolderPV;
@@ -49,6 +52,7 @@ private:
    G4Material *fVacuum;
    G4Material *fAir;
    G4Material *fWindowMat;
+   G4Material *fFoilMat;
    G4Material *fCassetteMat;
    G4Material *fPlateMat;
    G4Material *fHolderMat;
@@ -106,6 +110,11 @@ private:
    G4double fWindowL;
    G4double fWindowW;
    G4double fWindowT;
+
+   G4LogicalVolume *ConstructFoil();
+   G4double fFoilL;
+   G4double fFoilW;
+   G4double fFoilT;
 
    G4LogicalVolume *ConstructSealing();
    G4double fSealingL;

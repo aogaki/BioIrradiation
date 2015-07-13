@@ -9,6 +9,7 @@
 class G4Event;
 class G4ParticleGun;
 class G4GenericMessenger;
+class TF1;
 
 class BIPrimaryGeneratorAction: public G4VUserPrimaryGeneratorAction
 {
@@ -23,9 +24,9 @@ private:
    G4ParticleGun *fProtonGun;
 
    G4double fZPosition;
-
-   void ReadTable();
-   G4double fEnergyTable[100000000];
+   G4double fEnergy;
+   
+   TF1 *fEneFnc;
 };
 
 #endif

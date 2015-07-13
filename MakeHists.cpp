@@ -14,6 +14,7 @@
 TH3D *HisAll;
 TH3D *HisSealing;
 TH3D *HisWindow;
+TH3D *HisFoil;
 TH3D *HisHolder;
 TH3D *HisCassette;
 TH3D *HisAir;
@@ -92,6 +93,14 @@ void DefineHists()
    HisWindow->SetXTitle("[mm]");
    HisWindow->SetYTitle("[mm]");
    HisWindow->SetZTitle("[mm]");
+
+   HisFoil = new TH3D("HisFoil", "Deposited Energy at Foil",
+                      Int_t(areaL), -areaL / 2., areaL / 2.,
+                      Int_t(areaW), -areaW / 2., areaW / 2.,
+                      15, 0., 1.5);
+   HisFoil->SetXTitle("[mm]");
+   HisFoil->SetYTitle("[mm]");
+   HisFoil->SetZTitle("[mm]");
 
    HisHolder = new TH3D("HisHolder", "Deposited Energy at Holder",
                         Int_t(areaL), -areaL / 2., areaL / 2.,
@@ -208,6 +217,8 @@ void MakeHists()
          HisSealing->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Window")
          HisWindow->Fill(position.X(), position.Y(), position.Z(), ene);
+      else if(TString(volumeName) == "Foil")
+         HisFoil->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Holder")
          HisHolder->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Cassette")
@@ -239,6 +250,7 @@ void MakeHists()
    HisAll->Write();
    HisSealing->Write();
    HisWindow->Write();
+   HisFoil->Write();
    HisHolder->Write();
    HisCassette->Write();
    HisAir->Write();

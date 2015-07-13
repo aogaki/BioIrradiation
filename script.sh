@@ -1,21 +1,24 @@
 #!/bin/bash
 
-#rm -f *.root
 #kEvents=100000000
 kEvents=10000000
-#kEvents=1000000
+#kEvents=10000
 #outDir="/media/aogaki/Data/BI"
 
-#root -l -q "BeamProfile/ProtonGenerator.cpp+O($kEvents)"
-#echo "/run/beamOn $kEvents" > tmp.mac
-#./BI -m tmp.mac
-#root -l -q MakeHists.cpp+O
+outDir="Ni200"
+rm -f *.root
+rm -f tmp.mac
+echo "/BI/Geometry/WindowMaterial G4_Ni" > tmp.mac
+echo "/BI/Geometry/WindowThickness 200" >> tmp.mac
+echo "/run/beamOn $kEvents" >> tmp.mac
+./BI -m tmp.mac
+root -l -q MakeHists.cpp+O
+mv out.root tmp.root
 
-for ((i=303;i<10000;i++)) do
-    root -l -q "BeamProfile/ProtonGenerator.cpp+O($kEvents)"
+for ((i=1;i<1500;i++)); do
     ./BI -m tmp.mac
     root -l -q FillHists.cpp+O
-    cp out.root tmp.root
-    #rm -f Out/*
-    cp out.root Out/$i.root
+    mv out.root $outDir/$i.root
+    rm tmp.root
+    ln -sf $outDir/$i.root tmp.root
 done

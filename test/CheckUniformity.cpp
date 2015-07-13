@@ -15,6 +15,8 @@ TH1D *HisEnergy[96];
 TF1 *FitEnergy[96];
 TH1D *HisTest;
 
+TH1D *HisWellEnergy;
+
 TString XYtoWell(Double_t x, Double_t y)
 {
    if(x < -54. || x >= 54. || y < -36. || y >= 36.){
@@ -81,6 +83,9 @@ void DefineHists()
    HisTest = new TH1D("HisTest", "test", 500, 0, 50);
    HisTest->SetXTitle("Deposited Energy (MeV)");
 
+   HisWellEnergy = new TH1D("HisWellEnergy", "Deposited Energy in EachWell in Each Well (MeV)",
+                            1000, 0., 0.);
+   
    UInt_t hisIt = 0;
    for(Double_t y = -36.; y < 32.; y += 9.){
       for(Double_t x = -54.; x < 50.; x += 9.){
@@ -175,7 +180,7 @@ void FitHists()
 void CheckUniformity()
 {
    TFile *inputFile = new TFile("999.root", "READ");
-   //TFile *inputFile = new TFile("1800.root", "READ");
+   //TFile *inputFile = new TFile("1499.root", "READ");
    GetHists(inputFile);
 
    DefineHists();
@@ -192,14 +197,18 @@ void CheckUniformity()
 
    for(Int_t y = 0; y < 8; y++){
       for(Int_t x = 0; x < 12; x++){
-         //Double_t ene = HisEachWell[x + y * 12]->Integral();
-         Double_t ene = HisEnergy[x + y * 12]->GetMean();
+         Double_t ene = HisEachWell[x + y * 12]->Integral();
+         //Double_t ene = HisEnergy[x + y * 12]->GetMean();
          //Double_t ene = FitEnergy[x + y * 12]->GetParameter(1);
          HisPlate->Fill(xLabel[x], yLabel[y], ene);
+         cout << yLabel[y] <<"\t"<< xLabel[x] <<"\t"<< ene << endl;
+         HisWellEnergy->Fill(ene);
       }
    }
-
+   
    HisPlate->SetZTitle("Deposited Energy (MeV)");
-   HisPlate->Draw("COLZ");
+   HisPlate->Draw("TEXT");
 
+   cout << HisWellEnergy->GetStdDev() / HisWellEnergy->GetMean() << endl;
+   
 }

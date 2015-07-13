@@ -24,13 +24,16 @@ endif()
 # Setup include directory for this project
 #
 include(${Geant4_USE_FILE})
+include(FindROOT.cmake)
 
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
 #
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include 
-                    ${Geant4_INCLUDE_DIR})
+                    ${Geant4_INCLUDE_DIR}
+                    ${ROOT_INCLUDE_DIR})
+link_directories(${ROOT_LIBRARY_DIR})
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hpp)
 
@@ -38,7 +41,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hpp)
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(BI main.cpp ${sources} ${headers})
-target_link_libraries(BI ${Geant4_LIBRARIES})
+target_link_libraries(BI ${Geant4_LIBRARIES};${ROOT_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we

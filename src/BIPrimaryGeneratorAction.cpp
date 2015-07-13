@@ -1,5 +1,9 @@
 #include <fstream>
 #include <math.h>
+#include <time.h>
+
+#include <TF1.h>
+#include <TRandom3.h>
 
 #include "G4Event.hh"
 #include "G4ParticleTable.hh"
@@ -22,12 +26,23 @@ G4Mutex mutexInPGA = G4MUTEX_INITIALIZER;
 
 BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
    : G4VUserPrimaryGeneratorAction(),
-     fProtonGun(0)
+     fProtonGun(0),
+     fEneFnc(nullptr)
 {
-   ReadTable();
-   
    G4AutoLock lock(&mutexInPGA);
 
+   Int_t seed = time(NULL) + G4Threading::G4GetThreadId() * 10000;
+   gRandom->SetSeed(seed);
+   fEneFnc = new TF1("fEneFnc", "expo(0)+expo(2)+gaus(4)", 0., 30.);
+   fEneFnc->SetParameter(0, 2.67164e+01);
+   fEneFnc->SetParameter(1, -8.35969e-01);
+   fEneFnc->SetParameter(2, 2.15801e+01);
+   fEneFnc->SetParameter(3, -7.66820e-02);
+   fEneFnc->SetParameter(4, 3.79820e+09);
+   fEneFnc->SetParameter(5, 8.94835e+00);
+   fEneFnc->SetParameter(6, 3.04310e+00);
+   fEnergy = fEneFnc->GetRandom() * MeV;   
+   
    G4int nPar = 1;
    fProtonGun = new G4ParticleGun(nPar);
 
@@ -38,30 +53,12 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
    fProtonGun->SetParticleDefinition(proton);
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
    fProtonGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
-   fProtonGun->SetParticleEnergy(50.*MeV);
+   fProtonGun->SetParticleEnergy(fEnergy);
 }
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 {
    delete fProtonGun;
-}
-
-void BIPrimaryGeneratorAction::ReadTable()
-{
-   std::ifstream fin("ProtonEnergy.dat");
-   if(!fin){
-      G4cout << "Proton energy file can not be opened." << G4endl;
-      for(auto &ene: fEnergyTable) ene = 20.;
-   }
-   else{
-      G4int it = 0;
-      while(1){
-         G4double ene;
-         fin >> ene;
-         if(fin.eof()) break;
-         fEnergyTable[it++] = ene;
-      }
-   }
 }
 
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
@@ -72,8 +69,7 @@ void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
 
-   G4double ene = fEnergyTable[event->GetEventID()];// check array size!
-   fProtonGun->SetParticleEnergy(ene);
+   fProtonGun->SetParticleEnergy(fEnergy);
    fProtonGun->GeneratePrimaryVertex(event);
 /*
    G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
@@ -85,6 +81,7 @@ void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
    anaMan->AddNtupleRow(1);
 */
    G4AutoLock lock(&mutexInPGA);
+   fEnergy = fEneFnc->GetRandom() * MeV;
    if (nEveInPGA++ % 10000 == 0)
       G4cout << nEveInPGA - 1 << " events done" << G4endl;
 

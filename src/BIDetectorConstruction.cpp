@@ -27,6 +27,7 @@ BIDetectorConstruction::BIDetectorConstruction()
    : G4VUserDetectorConstruction(),
      fWorldLV(nullptr),
      fWindowPV(nullptr),
+     fFoilPV(nullptr),
      fAirPV(nullptr),
      fSealingPV(nullptr),
      fHolderPV(nullptr),
@@ -36,6 +37,7 @@ BIDetectorConstruction::BIDetectorConstruction()
      fVacuum(nullptr),
      fAir(nullptr),
      fWindowMat(nullptr),
+     fFoilMat(nullptr),
      fCassetteMat(nullptr),
      fPlateMat(nullptr),
      fHolderMat(nullptr),
@@ -107,6 +109,10 @@ void BIDetectorConstruction::DefineGeoPar()
    
    fOpeningL = 122.*mm;
    fOpeningW = 80.*mm;
+
+   fFoilL = fOpeningL;
+   fFoilW = fOpeningW;
+   fFoilT = 0.5*mm;
 }
 
 void BIDetectorConstruction::DefineMaterial()
@@ -117,6 +123,7 @@ void BIDetectorConstruction::DefineMaterial()
    fVacuum = manager->FindOrBuildMaterial("G4_Galactic");
    fAir = manager->FindOrBuildMaterial("G4_AIR");
    fWindowMat = manager->FindOrBuildMaterial("G4_Al");
+   fFoilMat = manager->FindOrBuildMaterial("G4_Au");
    fCassetteMat = manager->FindOrBuildMaterial("G4_Al"); // Just testing
    fPlateMat = manager->FindOrBuildMaterial("G4_POLYSTYRENE");
    fFilmMat =  manager->FindOrBuildMaterial("G4_POLYETHYLENE");
@@ -189,7 +196,13 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    G4ThreeVector holderPos = G4ThreeVector(0., 0., holderZ);
    fHolderPV = new G4PVPlacement(nullptr, holderPos, holderLV, "Holder", airLV,
                                  false, 0, fCheckOverlap);
-
+/*
+   G4LogicalVolume *foilLV = ConstructFoil();
+   G4double foilZ = (fFoilT - fAirT) / 2.;
+   G4ThreeVector foilPos = G4ThreeVector(0., 0., foilZ);
+   fFoilPV = new G4PVPlacement(nullptr, foilPos, foilLV, "Foil", airLV,
+                     false, 0, fCheckOverlap);
+*/
    G4LogicalVolume *plateLV = ConstructPlate();
    G4double plateZ = -fAirT / 2. + fAirGap + (fWellH + fPlateT) / 2.;
    G4ThreeVector platePos = G4ThreeVector(0., 0., plateZ);
@@ -442,6 +455,26 @@ G4LogicalVolume *BIDetectorConstruction::ConstructWindow()
    return windowLV;
 }
 
+G4LogicalVolume *BIDetectorConstruction::ConstructFoil()
+{
+   G4Box *foilS = new G4Box("Foil", fFoilL / 2., fFoilW / 2., fFoilT / 2.);
+   G4Box *maskS = new G4Box("Mask", 1.*m / 2., 1.*m / 2., 1.*m / 2.);
+   G4ThreeVector maskPos(-1.*m / 2., 0., 0.);
+   G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", foilS, maskS, nullptr, maskPos);
+
+   
+   G4LogicalVolume *foilLV;
+   if(fCut) foilLV = new G4LogicalVolume(halfS, fFoilMat, "Foil");
+   else foilLV = new G4LogicalVolume(foilS, fFoilMat, "Foil");
+   
+   G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Red());
+   visAttributes->SetVisibility(true);
+   foilLV->SetVisAttributes(visAttributes);
+   fVisAttributes.push_back(visAttributes);
+
+   return foilLV;
+}
+
 G4LogicalVolume *BIDetectorConstruction::ConstructSealing()
 {
    G4Box *boardS = new G4Box("Sealing", fSealingL / 2., fSealingW / 2., fSealingT / 2.);
@@ -496,6 +529,20 @@ void BIDetectorConstruction::DefineCommands()
                                   "Set the material of the window.");
    windowMatCmd.SetParameterName("matName", true);
 
+   G4GenericMessenger::Command &foilTCmd
+      = fMessenger->DeclareMethodWithUnit("FoilThickness", "um",
+                                          &BIDetectorConstruction::SetFoilT, 
+                                          "Set the thickness of the foil.");
+   foilTCmd.SetParameterName("thickness", true);
+   foilTCmd.SetRange("thickness>=0. && thickness<=10000.");
+   foilTCmd.SetDefaultValue("500.0");
+
+   G4GenericMessenger::Command &foilMatCmd
+      = fMessenger->DeclareMethod("FoilMaterial",
+                                  &BIDetectorConstruction::SetFoilMat, 
+                                  "Set the material of the foil.");
+   foilMatCmd.SetParameterName("matName", true);
+
    G4GenericMessenger::Command &cassetteMatCmd
       = fMessenger->DeclareMethod("CassetteMaterial",
                                   &BIDetectorConstruction::SetCassetteMat, 
@@ -526,9 +573,6 @@ void BIDetectorConstruction::SetWindowT(G4double t)
    fAirPV->SetTranslation(airPos);
    
    G4RunManager::GetRunManager()->GeometryHasBeenModified();
-
-   G4UImanager *UImanager = G4UImanager::GetUIpointer();
-   UImanager->ApplyCommand("/geometry/test/run");
 }
 
 void BIDetectorConstruction::SetWindowMat(G4String matName)
@@ -547,6 +591,42 @@ void BIDetectorConstruction::SetWindowMat(G4String matName)
              << windowLV->GetMaterial()->GetName()
              << " to " << mat->GetName() <<". "<< G4endl;
       windowLV->SetMaterial(mat);
+      G4RunManager::GetRunManager()->GeometryHasBeenModified();
+   }
+}
+
+void BIDetectorConstruction::SetFoilT(G4double t)
+{
+   G4cout << t << G4endl;
+   fFoilT = t;
+   G4Box *foil = (G4Box*)(fFoilPV->GetLogicalVolume()->GetSolid());
+   foil->SetZHalfLength(fFoilT / 2.);
+
+   G4ThreeVector sealingPos = G4ThreeVector(0., 0., -(fFoilT + fSealingT) / 2.);
+   fSealingPV->SetTranslation(sealingPos);
+   
+   G4ThreeVector airPos = G4ThreeVector(0., 0., (fFoilT + fAirT) / 2.);
+   fAirPV->SetTranslation(airPos);
+   
+   G4RunManager::GetRunManager()->GeometryHasBeenModified();
+}
+
+void BIDetectorConstruction::SetFoilMat(G4String matName)
+{
+   G4NistManager *manager = G4NistManager::Instance();
+   G4Material *mat;
+   mat = manager->FindOrBuildMaterial(matName);
+   if(mat == nullptr){
+      G4cout << matName << " is not a defined material.\n"
+             << "Foil material is not changed." << G4endl;
+      //exit(0);
+   }
+   else{
+      G4LogicalVolume *foilLV = fFoilPV->GetLogicalVolume();
+      G4cout << "The material of foil is changed from "
+             << foilLV->GetMaterial()->GetName()
+             << " to " << mat->GetName() <<". "<< G4endl;
+      foilLV->SetMaterial(mat);
       G4RunManager::GetRunManager()->GeometryHasBeenModified();
    }
 }
@@ -584,7 +664,4 @@ void BIDetectorConstruction::SetAirGapT(G4double t)
    fFilmPV->SetTranslation(filmPos);
 
    G4RunManager::GetRunManager()->GeometryHasBeenModified();
-
-   G4UImanager *UImanager = G4UImanager::GetUIpointer();
-   UImanager->ApplyCommand("/geometry/test/run");
 }

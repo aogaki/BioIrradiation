@@ -13,6 +13,7 @@
 TH3D *HisAll;
 TH3D *HisSealing;
 TH3D *HisWindow;
+TH3D *HisFoil;
 TH3D *HisHolder;
 TH3D *HisCassette;
 TH3D *HisAir;
@@ -43,7 +44,7 @@ TString XYtoWell(Double_t x, Double_t y)
 
 Int_t XYtoIndex(Double_t x, Double_t y)
 {
-      if(x < -54. || x >= 54. || y < -36. || y >= 36.){
+   if(x < -54. || x >= 54. || y < -36. || y >= 36.){
       cout << "The coordinate is out of range.  x = " << x
            << ", y = " << y << endl;
       exit(0);
@@ -64,6 +65,7 @@ void GetHists(TFile *file)
    HisAll = (TH3D*)file->Get("HisAll");
    HisSealing = (TH3D*)file->Get("HisSealing");
    HisWindow = (TH3D*)file->Get("HisWindow");
+   HisFoil = (TH3D*)file->Get("HisFoil");
    HisHolder = (TH3D*)file->Get("HisHolder");
    HisCassette = (TH3D*)file->Get("HisCassette");
    HisAir = (TH3D*)file->Get("HisAir");
@@ -131,6 +133,8 @@ void FillHists()
          HisSealing->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Window")
          HisWindow->Fill(position.X(), position.Y(), position.Z(), ene);
+      else if(TString(volumeName) == "Foil")
+         HisFoil->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Holder")
          HisHolder->Fill(position.X(), position.Y(), position.Z(), ene);
       else if(TString(volumeName) == "Cassette")
@@ -159,6 +163,7 @@ void FillHists()
    HisAll->Write();
    HisSealing->Write();
    HisWindow->Write();
+   HisFoil->Write();
    HisHolder->Write();
    HisCassette->Write();
    HisAir->Write();
