@@ -4,6 +4,7 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ParticleGun.hh"
 #include "G4ThreeVector.hh"
+#include "G4Threading.hh"
 
 
 class G4Event;
@@ -24,7 +25,6 @@ private:
    G4ParticleGun *fProtonGun;
 
    G4double fZPosition;
-   G4double fEnergy;
    
    TF1 *fEneFnc;
 };
