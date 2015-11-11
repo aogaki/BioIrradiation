@@ -1,15 +1,18 @@
 CMakeCache.txt
 CMakeFiles/
+Data/
+test/
+tmp/
 cmake_install.cmake
 BI
 G4History.macro
 Makefile
-*.root
 *.ods
 *.pdf
 *.pcm
 *.so
 *.d
 *~
+tmp.*
 Makefile
 

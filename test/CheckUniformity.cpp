@@ -9,6 +9,7 @@
 
 TH2D *HisEachWell[96];
 TH2D *HisPlate;
+TH2D *HisDose;
 TH2D *HisEneDis;
 
 TH1D *HisEnergy[96];
@@ -72,10 +73,15 @@ void GetHists(TFile *file)
 
 void DefineHists()
 {
-   HisPlate = new TH2D("HisPlate", "Average Deposited Energy in Each Well (MeV)",
+   HisPlate = new TH2D("HisPlate", "Total Deposited Energy in Each Well (MeV)",
                       12, 0, 12, 8, 0, 8);
    HisPlate->SetStats(0);
    HisPlate->SetCanExtend(TH1::kAllAxes);
+
+   HisDose = new TH2D("HisDose", "Average Dose in Each Mesh (Gy / 20um)",
+                      12, 0, 12, 8, 0, 8);
+   HisDose->SetStats(0);
+   HisDose->SetCanExtend(TH1::kAllAxes);
 
    HisEneDis = new TH2D("HisEneDis", "Energy Distrbution (MeV) vs Distance from Center of Plate (mm)",
                         50, 0, 50, 70, 0, 70);
@@ -177,10 +183,26 @@ void FitHists()
 
 }
 
+Double_t GetDose(Double_t depEne)
+{
+   depEne *= 1e6; // MeV -> eV.  Only for easy undestanding
+   Double_t eneJ = depEne * 1.60217657e-19; // eV -> J
+
+   const Double_t dia = 0.639; // cm
+   const Double_t t = 0.002;
+   Double_t V = t * TMath::Pi() * dia*dia / 4; // cm2
+   const Double_t density = 1.1; // g / cm3
+   Double_t mass = V * density; // g
+   mass *= 1e-3; // g -> kg
+
+   Double_t dose = eneJ / mass; // Gy = J / kg
+   return dose;
+}
+
 void CheckUniformity()
 {
-   TFile *inputFile = new TFile("999.root", "READ");
-   //TFile *inputFile = new TFile("1499.root", "READ");
+   //TFile *inputFile = new TFile("999.root", "READ");
+   TFile *inputFile = new TFile("149.root", "READ");
    GetHists(inputFile);
 
    DefineHists();
@@ -201,13 +223,15 @@ void CheckUniformity()
          //Double_t ene = HisEnergy[x + y * 12]->GetMean();
          //Double_t ene = FitEnergy[x + y * 12]->GetParameter(1);
          HisPlate->Fill(xLabel[x], yLabel[y], ene);
-         cout << yLabel[y] <<"\t"<< xLabel[x] <<"\t"<< ene << endl;
+         Double_t dose = GetDose(ene);
+         HisDose->Fill(xLabel[x], yLabel[y], dose);
+         cout << yLabel[y] <<"\t"<< xLabel[x] <<"\t"<< ene <<"\t"<< dose << endl;
          HisWellEnergy->Fill(ene);
       }
    }
    
    HisPlate->SetZTitle("Deposited Energy (MeV)");
-   HisPlate->Draw("TEXT");
+   HisPlate->Draw("COLZ");
 
    cout << HisWellEnergy->GetStdDev() / HisWellEnergy->GetMean() << endl;
    

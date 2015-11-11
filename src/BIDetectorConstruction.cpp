@@ -1,4 +1,7 @@
+#include <stdio.h>
 #include <string>
+#include <fstream>
+
 #include "G4SystemOfUnits.hh"
 #include "G4NistManager.hh"
 #include "G4Material.hh"
@@ -113,6 +116,27 @@ void BIDetectorConstruction::DefineGeoPar()
    fFoilL = fOpeningL;
    fFoilW = fOpeningW;
    fFoilT = 0.5*mm;
+
+   fAttL = fWellPitch;
+
+   for(G4int y = 0; y < 12; y++){ // init with 0. no attenuator
+      for(G4int x = 0; x < 8; x++){
+         fAttT[y][x] = 0;
+      }
+   }
+   std::ifstream attT("attT.dat");
+   if(attT.is_open()){
+      std::string buf;
+      for(G4int y = 0; y < 12; y++){
+         for(G4int x = 0; x < 8; x++){
+            attT >> buf;
+            G4cout << atof(buf.c_str()) << G4endl;
+            fAttT[y][x] = atof(buf.c_str());
+         }
+      }
+      attT.close();
+   }
+   
 }
 
 void BIDetectorConstruction::DefineMaterial()
@@ -189,7 +213,6 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    fAirPV = new G4PVPlacement(nullptr, airPos, airLV, "Air", fWorldLV,
                               false, 0, fCheckOverlap);
    
-   
    //G4LogicalVolume *holderLV = ConstructHolder();
    G4LogicalVolume *holderLV = ConstructSimpleHolder();
    G4double holderZ = -fCassetteH / 2.;
@@ -209,6 +232,29 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    fPlatePV = new G4PVPlacement(nullptr, platePos, plateLV, "Plate", airLV,
                                 false, 0, fCheckOverlap);
 
+   G4String rowMap[8] = {"H", "G", "F", "E", "D", "C", "B", "A"};
+   for(G4int iColumn = 0; iColumn < 12; iColumn++){
+      for(G4int iRow = 0; iRow < 8; iRow++){
+         if(fAttT[iColumn][iRow] != 0.){
+            G4String name = "Att" + rowMap[iRow] + std::to_string(iColumn + 1);
+            G4cout << name <<"\t"<< fAttT[iColumn][iRow]  << G4endl;
+            G4double t = fAttT[iColumn][iRow]*um;
+            G4LogicalVolume *attLV = ConstructAtt(name, t);
+            G4double xStart = -(fWellPitch * 11) / 2.;
+            G4double yStart = -(fWellPitch * 7) / 2.;
+            G4double xPos = xStart + iColumn * fWellPitch;
+            G4double yPos = yStart + iRow * fWellPitch;
+            //G4double zPos = -fAirT / 2. + fAirGap - t / 2;
+            G4double zPos = -fAirT / 2. + t / 2;
+            //G4double zPos = -fWindowT / 2. - t / 2;
+            G4ThreeVector attPos = G4ThreeVector(xPos, yPos, zPos);
+            fAttPV[iColumn * 8 + iRow] =
+               new G4PVPlacement(nullptr, attPos, attLV, name, airLV,
+                                 false, 0, fCheckOverlap);
+         }
+      }
+   }
+   
    G4LogicalVolume *filmLV = ConstructFilm();
    G4double filmZ = plateZ + fPlateH / 2. + fFilmT / 2.;
    G4ThreeVector filmPos = G4ThreeVector(0., 0., filmZ);
@@ -494,6 +540,19 @@ G4LogicalVolume *BIDetectorConstruction::ConstructSealing()
    fVisAttributes.push_back(visAttributes);
 
    return sealingLV;
+}
+
+G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double t)
+{
+   G4Box *attS = new G4Box(name, fAttL / 2., fAttL / 2., t / 2.);
+   G4LogicalVolume *attLV = new G4LogicalVolume(attS, fPlateMat, name);
+
+   G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Brown());
+   visAttributes->SetVisibility(true);
+   attLV->SetVisAttributes(visAttributes);
+   fVisAttributes.push_back(visAttributes);
+
+   return attLV;
 }
 
 void BIDetectorConstruction::ConstructSDandField()

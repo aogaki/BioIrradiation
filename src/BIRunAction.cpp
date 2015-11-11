@@ -21,7 +21,7 @@ void BIRunAction::BeginOfRunAction(const G4Run *)
     anaMan->SetVerboseLevel(1);
     G4cout << "Using " << anaMan->GetType()
            << " analysis manager" << G4endl;
-    G4String fileName = "result";
+    G4String fileName = "/dev/shm/result";
     anaMan->OpenFile(fileName);
 
     // Ntuple
