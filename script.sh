@@ -6,8 +6,8 @@ kMat="Al"
 kT="1000"
 kD="300"
 
-outDir="Data/$kMat$kT""D$D"
-mkdir $outDir
+outDir="Data/$kMat$kT""D$kD"
+mkdir -p $outDir
 rm -f tmp.root
 rm -f tmp.mac
 
@@ -16,7 +16,10 @@ echo "/BI/Geometry/WindowThickness $kT" >> tmp.mac
 echo "/BI/Primary/Z -$kD" >> tmp.mac
 echo "/run/beamOn $kEvents" >> tmp.mac
 
-for ((i=1;i<=1000;i++)); do
+rm -f attT.dat
+ln -sf AttData/attAl1000Dose1.0.dat attT.dat
+
+for ((i=1;i<=1;i++)); do
     ./BI -m tmp.mac
     root -l -q run.cpp+O
     mv tmp.root $outDir/$i.root
