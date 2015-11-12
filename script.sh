@@ -1,25 +1,23 @@
 #!/bin/bash
 
-#kEvents=100000000
-#kEvents=10000000
-kEvents=10000
-#outDir="/media/aogaki/Data/BI"
+#kEvents="10000000"
+kEvents="10000"
+kMat="Al"
+kT="1000"
+kD="300"
 
-outDir="Al10000"
+outDir="Data/$kMat$kT""D$D"
 mkdir $outDir
 rm -f tmp.root
 rm -f tmp.mac
-echo "/BI/Geometry/WindowMaterial G4_Al" > tmp.mac
-echo "/BI/Geometry/WindowThickness 10000" >> tmp.mac
-echo "/run/beamOn $kEvents" >> tmp.mac
-./BI -m tmp.mac
-root -l -q MakeHists.cpp+O
-mv out.root tmp.root
 
-for ((i=1;i<1500;i++)); do
+echo "/BI/Geometry/WindowMaterial G4_$kMat" > tmp.mac
+echo "/BI/Geometry/WindowThickness $kT" >> tmp.mac
+echo "/BI/Primary/Z -$kD" >> tmp.mac
+echo "/run/beamOn $kEvents" >> tmp.mac
+
+for ((i=1;i<=1000;i++)); do
     ./BI -m tmp.mac
-    root -l -q FillHists.cpp+O
-    mv out.root $outDir/$i.root
-    rm -f tmp.root
-    ln -sf $outDir/$i.root tmp.root
+    root -l -q run.cpp+O
+    mv tmp.root $outDir/$i.root
 done
