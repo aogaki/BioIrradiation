@@ -167,12 +167,12 @@ void EventAnalyzer::SlaveBegin(TTree * /*tree*/)
    GetOutputList()->Add(fHisWell);
 
    fHisCell = new TH2D("HisCell", "Deposited Energy at Cell",
-                       Int_t(areaL), -areaL / 2., areaL / 2.,
-                       Int_t(areaW), -areaW / 2., areaW / 2.);
+                       Int_t(plateL * 10), -plateL / 2., plateL / 2.,
+                       Int_t(plateW * 10), -plateW / 2., plateW / 2.);
    fHisCell->SetXTitle("[mm]");
    fHisCell->SetYTitle("[mm]");
    GetOutputList()->Add(fHisCell);
-
+/*
    const Double_t wellPitch = 9.;
    const Double_t bin20W = 0.02;
    UInt_t hisIt = 0;
@@ -186,7 +186,7 @@ void EventAnalyzer::SlaveBegin(TTree * /*tree*/)
          GetOutputList()->Add(fHisEachCell[hisIt++]);
       }
    }
-
+*/
 }
 
 Bool_t EventAnalyzer::Process(Long64_t entry)
@@ -238,8 +238,9 @@ Bool_t EventAnalyzer::Process(Long64_t entry)
       else if(TString(VolumeName) == "Stuff")
          fHisWell->Fill(x, y, z, DepositEnergy);
       else if(TString(VolumeName) == "Cell"){
-         Int_t wellID = XYtoIndex(x, y);
-         fHisEachCell[wellID]->Fill(x, y, DepositEnergy);
+         fHisCell->Fill(x, y, DepositEnergy);
+         //Int_t wellID = XYtoIndex(x, y);
+         //fHisEachCell[wellID]->Fill(x, y, DepositEnergy);
       }
    }
    return kTRUE;
@@ -270,12 +271,12 @@ void EventAnalyzer::Terminate()
    fHisPlate->Write();
    fHisFilm->Write();
    fHisWell->Write();
+   fHisCell->Write();
    for(Int_t i = 0; i < 96; i++)
-      fHisEachCell[i]->Write();
+      //fHisEachCell[i]->Write();
 
    outputFile->Close();
 
-   fHisEachCell[48]->Draw("COLZ");
 }
 
 TString  EventAnalyzer::XYtoWell(Double_t x, Double_t y)

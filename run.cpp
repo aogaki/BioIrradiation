@@ -6,7 +6,7 @@
 void ActivatePROOF(TChain *chain, Int_t nThreads = 0)
 {
    TProof *proof = TProof::Open("");
-   //proof->SetProgressDialog(kFALSE);
+   proof->SetProgressDialog(kFALSE);
    if(nThreads > 0) proof->SetParallel(nThreads);
 
    chain->SetProof();
@@ -19,7 +19,7 @@ void run()
 
    const Int_t kNThreads = chain->GetNtrees();
    //ActivatePROOF(chain, kNThreads);
-   //ActivatePROOF(chain);
+   ActivatePROOF(chain);
    
    chain->Process("EventAnalyzer.C+O");
 }
