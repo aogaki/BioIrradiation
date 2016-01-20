@@ -82,11 +82,11 @@ BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 {
-   //G4double coneTheta = 15.*deg;
-   //G4ThreeVector particleVec = GetParVec(coneTheta);
-   //fEnergy = fEneFnc->GetRandom() * MeV;
+   G4double coneTheta = 15.*deg;
+   G4ThreeVector particleVec = GetParVec(coneTheta);
+   fEnergy = fEneFnc->GetRandom() * MeV;
 
-   G4ThreeVector particleVec = GetParVecEne();
+   //G4ThreeVector particleVec = GetParVecEne();
    fProtonGun->SetParticleMomentumDirection(particleVec);
 
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
