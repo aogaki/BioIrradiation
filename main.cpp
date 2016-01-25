@@ -40,6 +40,26 @@ namespace
    }
 }
 
+unsigned int GetRandomSeed()
+{
+   unsigned int seed; 
+   std::ifstream file ("/dev/urandom", std::ios::binary);
+   if (file.is_open()){
+      char *memblock;
+      int size = sizeof(int);
+      memblock = new char[size];
+      file.read(memblock, size);
+      file.close();
+      seed = *reinterpret_cast<int*>(memblock);
+      delete[] memblock;
+   }
+   else{
+      seed = 0;
+   }
+
+   return seed;
+}
+
 int main(int argc, char **argv)
 {
    G4String macro = "";
@@ -56,7 +76,8 @@ int main(int argc, char **argv)
    // Remove?
    // Choose the Random engine
    CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
-   G4int seed = time(0);
+   G4int seed = GetRandomSeed();
+   if(seed == 0) seed = time(0);
    G4cout << "\nseed = " << seed << G4endl;
    CLHEP::HepRandom::setTheSeed(seed);
    G4Random::setTheSeed(seed);

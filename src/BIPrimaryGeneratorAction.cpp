@@ -39,9 +39,11 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
      fEneFnc(nullptr)
 {
    G4AutoLock lock(&mutexInPGA);
-
-   Int_t seed = time(NULL) + G4Threading::G4GetThreadId() * 100000;
+   
+   Int_t seed = G4UniformRand() * 1000000;
+   G4cout << "Seed of PGA = " << seed << G4endl;
    gRandom->SetSeed(seed);
+   
 /*
    if(!fEneFnc_G4MT_TLS_) fEneFnc_G4MT_TLS_ = new TF1("fEneFnc", "expo(0)+expo(2)+gaus(4)", 0., 30.);
    fEneFnc = fEneFnc_G4MT_TLS_;

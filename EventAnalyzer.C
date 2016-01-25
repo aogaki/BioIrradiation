@@ -62,6 +62,7 @@ void EventAnalyzer::Begin(TTree * /*tree*/)
 
 void EventAnalyzer::SlaveBegin(TTree * /*tree*/)
 {
+   cout << "SlaveBegin" << endl;
    // The SlaveBegin() function is called after the Begin() function.
    // When running with PROOF SlaveBegin() is called on each slave server.
    // The tree argument is deprecated (on PROOF 0 is passed).
@@ -272,7 +273,7 @@ void EventAnalyzer::Terminate()
    fHisFilm->Write();
    fHisWell->Write();
    fHisCell->Write();
-   for(Int_t i = 0; i < 96; i++)
+   //for(Int_t i = 0; i < 96; i++)
       //fHisEachCell[i]->Write();
 
    outputFile->Close();
