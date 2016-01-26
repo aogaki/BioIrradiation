@@ -16,12 +16,15 @@ class TH2D;
 class BIPrimaryGeneratorAction: public G4VUserPrimaryGeneratorAction
 {
 public:
-   BIPrimaryGeneratorAction(G4bool oldBeamFlag);
+   BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gridFlag);
    virtual ~BIPrimaryGeneratorAction();
 
    virtual void GeneratePrimaries(G4Event *);
 
 private:
+   G4bool fUseOldGun;
+   G4bool fForGrid;
+   
    void GetParVec(G4double limit);
    G4ParticleGun *fProtonGun;
    

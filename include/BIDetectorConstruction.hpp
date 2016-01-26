@@ -15,7 +15,7 @@
 class BIDetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
-   BIDetectorConstruction();
+   BIDetectorConstruction(G4bool forGrid);
    virtual ~BIDetectorConstruction();
 
    virtual G4VPhysicalVolume *Construct();
@@ -31,6 +31,7 @@ public:
    
 private:
    G4bool fCut;
+   G4bool fForGrid;
    
    G4LogicalVolume *fWorldLV;
    G4bool fCheckOverlap;

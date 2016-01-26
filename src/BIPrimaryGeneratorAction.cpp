@@ -33,11 +33,14 @@ G4Mutex mutexInPGA = G4MUTEX_INITIALIZER;
 // In case without, this code looks like working well...
 G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = 0;
 */
-BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag)
+BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gridFlag)
    : G4VUserPrimaryGeneratorAction(),
      fProtonGun(0),
      fEneFnc(nullptr)
 {
+   fUseOldGun = oldBeamFlag;
+   fForGrid = gridFlag;
+   
    G4AutoLock lock(&mutexInPGA);
    
    Int_t seed = G4UniformRand() * 1000000;
@@ -76,11 +79,13 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag)
 
    DefineCommands();
 
+// Pointer of Function is not good for readable code?
+// And also, use if statement does not make program slow.
    if(oldBeamFlag)
       GunPointer = &BIPrimaryGeneratorAction::OldGun;
    else
       GunPointer = &BIPrimaryGeneratorAction::NewGun;
-   
+
 }
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
@@ -97,25 +102,30 @@ void BIPrimaryGeneratorAction::OldGun()
 
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 {
-   (this->*GunPointer)(); // Not good name!
+   //(this->*GunPointer)(); // Not good name!
+   // Now I use if statement switching
+   
+   if(fUseOldGun) OldGun();
+   else NewGun();
    
    fProtonGun->SetParticleMomentumDirection(fParVec);
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
    fProtonGun->SetParticleEnergy(fEnergy);
    fProtonGun->GeneratePrimaryVertex(event);
 
-   G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
-   anaMan->FillNtupleIColumn(1, 0, 11);
-   anaMan->FillNtupleDColumn(1, 1, fEnergy);
-   anaMan->FillNtupleDColumn(1, 2, fParVec.x());
-   anaMan->FillNtupleDColumn(1, 3, fParVec.y());
-   anaMan->FillNtupleDColumn(1, 4, fParVec.z());
-   anaMan->AddNtupleRow(1);
+   if(!fForGrid){
+      G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
+      anaMan->FillNtupleIColumn(1, 0, 11);
+      anaMan->FillNtupleDColumn(1, 1, fEnergy);
+      anaMan->FillNtupleDColumn(1, 2, fParVec.x());
+      anaMan->FillNtupleDColumn(1, 3, fParVec.y());
+      anaMan->FillNtupleDColumn(1, 4, fParVec.z());
+      anaMan->AddNtupleRow(1);
 
-   G4AutoLock lock(&mutexInPGA);
-   if (nEveInPGA++ % 10000 == 0)
-      G4cout << nEveInPGA - 1 << " events done" << G4endl;
-
+      G4AutoLock lock(&mutexInPGA);
+      if (nEveInPGA++ % 10000 == 0)
+         G4cout << nEveInPGA - 1 << " events done" << G4endl;
+   }
 }
 
 void BIPrimaryGeneratorAction::GetParVec(G4double limit)

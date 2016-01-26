@@ -4,10 +4,11 @@
 #include "BIEventAction.hpp"
 
 
-BIActionInitialization::BIActionInitialization(G4bool beamFlag)
+BIActionInitialization::BIActionInitialization(G4bool beamFlag, G4bool gridFlag)
    : G4VUserActionInitialization()
 {
    fUseOldBeam = beamFlag;
+   fForGrid = gridFlag;
 }
 
 BIActionInitialization::~BIActionInitialization()
@@ -15,12 +16,12 @@ BIActionInitialization::~BIActionInitialization()
 
 void BIActionInitialization::BuildForMaster() const
 {
-   SetUserAction(new BIRunAction());
+   SetUserAction(new BIRunAction(fForGrid));
 }
 
 void BIActionInitialization::Build() const
 {
-   SetUserAction(new BIPrimaryGeneratorAction(fUseOldBeam));
-   SetUserAction(new BIRunAction());
-   SetUserAction(new BIEventAction());
+   SetUserAction(new BIPrimaryGeneratorAction(fUseOldBeam, fForGrid));
+   SetUserAction(new BIRunAction(fForGrid));
+   SetUserAction(new BIEventAction(fForGrid));
 }

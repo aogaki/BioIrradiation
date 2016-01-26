@@ -36,6 +36,8 @@ namespace
       G4cerr << " Usage: " << G4endl;
       G4cerr << " ./LG [-m macro filename]\n"
              << " -a Show all trajectory (default show only ploton)\n"
+             << " --oldbeam Using Green's article beam profile\n"
+             << " --grid For Grid system, output is only a few parameters\n"
              << G4endl;
    }
 }
@@ -65,10 +67,12 @@ int main(int argc, char **argv)
    G4String macro = "";
    G4bool showAll = false;
    G4bool useOldBeam = false;
+   G4bool forGrid = false;
    for (G4int i = 1; i < argc; i++) {
       if (G4String(argv[i]) == "-m") macro = argv[++i];
       else if (G4String(argv[i]) == "-a") showAll = true;
       else if (G4String(argv[i]) == "--oldbeam") useOldBeam = true;
+      else if (G4String(argv[i]) == "--grid") forGrid = true;
       else {
          PrintUsage();
          return 1;
@@ -77,6 +81,9 @@ int main(int argc, char **argv)
 
    if(useOldBeam){
       G4cout << "Use Old Beam" << G4endl;
+   }
+   if(forGrid){
+      G4cout << "Small output mode" << G4endl;
    }
    
    // Remove?
@@ -102,8 +109,8 @@ int main(int argc, char **argv)
    // Set mandatory initialization classes
    //
    // Detector construction
-   runManager->SetUserInitialization(new BIDetectorConstruction());
-   G4cout << "Here" << G4endl;
+   runManager->SetUserInitialization(new BIDetectorConstruction(forGrid));
+
    // Physics list
    //G4VModularPhysicsList *physicsList = new FTFP_BERT;
    //G4VModularPhysicsList *physicsList = new QGSP_BERT_HP;
@@ -116,7 +123,7 @@ int main(int argc, char **argv)
    runManager->SetUserInitialization(physicsList);
 
    // Primary generator action and User action intialization
-   runManager->SetUserInitialization(new BIActionInitialization(useOldBeam));
+   runManager->SetUserInitialization(new BIActionInitialization(useOldBeam, forGrid));
 
    // Initialize G4 kernel
    //

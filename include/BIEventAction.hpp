@@ -8,13 +8,14 @@
 class BIEventAction : public G4UserEventAction
 {
 public:
-   BIEventAction();
+   BIEventAction(G4bool gridFlag);
    virtual ~BIEventAction();
 
    virtual void BeginOfEventAction(const G4Event *);
    virtual void EndOfEventAction(const G4Event *);
 
 private:
+   G4bool fForGrid;
    G4int fHitsCollectionID;
 };
 

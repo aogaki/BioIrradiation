@@ -24,9 +24,30 @@
 
 #include "BIDetectorConstruction.hpp"
 #include "BICommonSD.hpp"
+#include "BISmallSD.hpp"
 
 
-BIDetectorConstruction::BIDetectorConstruction()
+#ifdef NOTCPP11
+#include <sstream>
+G4double stol(std::string buf)
+{
+   std::istringstream is;
+   is.str(buf);
+   G4double retVal;
+   is >> retVal;
+   return retVal;
+}
+
+G4String itos(const G4int val)
+{
+  std::ostringstream oss;
+  oss << val;
+  return oss.str();
+}
+
+#endif
+
+BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid)
    : G4VUserDetectorConstruction(),
      fWorldLV(nullptr),
      fWindowPV(nullptr),
@@ -50,6 +71,7 @@ BIDetectorConstruction::BIDetectorConstruction()
      fStuffMat(nullptr)
 {
    fCut = false;
+   fForGrid = forGrid;
    fCheckOverlap = true;
    
    DefineMaterial();
@@ -124,7 +146,7 @@ void BIDetectorConstruction::DefineGeoPar()
          fAttT[y][x] = 0;
       }
    }
-   std::ifstream attT("attT.dat");
+   std::ifstream attT("att.dat");
    if(attT.is_open()){
       std::string buf;
       for(G4int y = 0; y < 12; y++){
@@ -236,7 +258,11 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    for(G4int iColumn = 0; iColumn < 12; iColumn++){
       for(G4int iRow = 0; iRow < 8; iRow++){
          if(fAttT[iColumn][iRow] != 0.){
+#ifdef NOTCPP11
+            G4String name = "Att" + rowMap[iRow] + itos(iColumn + 1);
+#else
             G4String name = "Att" + rowMap[iRow] + std::to_string(iColumn + 1);
+#endif
             G4cout << name <<"\t"<< fAttT[iColumn][iRow]  << G4endl;
             G4double t = fAttT[iColumn][iRow]*um;
             G4LogicalVolume *attLV = ConstructAtt(name, t);
@@ -557,14 +583,21 @@ G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double t)
 
 void BIDetectorConstruction::ConstructSDandField()
 {
-   G4VSensitiveDetector *CommonSD = new BICommonSD("Common",
-                                                   "CommonHitsCollection");
+   if(fForGrid){
+      G4VSensitiveDetector *SmallSD = new BICommonSD("Small",
+                                                     "SmallHitsCollection");
+      SetSensitiveDetector("Cell", SmallSD);
+   }
+   else{
+      G4VSensitiveDetector *CommonSD = new BICommonSD("Common",
+                                                      "CommonHitsCollection");
 
-   G4LogicalVolumeStore *lvStore = G4LogicalVolumeStore::GetInstance();
-   std::vector<G4LogicalVolume*>::const_iterator it;
-   for(it = lvStore->begin(); it != lvStore->end(); it++){
-      if((*it)->GetName() != "World")
-         SetSensitiveDetector((*it)->GetName(), CommonSD);
+      G4LogicalVolumeStore *lvStore = G4LogicalVolumeStore::GetInstance();
+      std::vector<G4LogicalVolume*>::const_iterator it;
+      for(it = lvStore->begin(); it != lvStore->end(); it++){
+         if((*it)->GetName() != "World")
+            SetSensitiveDetector((*it)->GetName(), CommonSD);
+      }
    }
 }
 
