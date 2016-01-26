@@ -64,15 +64,21 @@ int main(int argc, char **argv)
 {
    G4String macro = "";
    G4bool showAll = false;
+   G4bool useOldBeam = false;
    for (G4int i = 1; i < argc; i++) {
       if (G4String(argv[i]) == "-m") macro = argv[++i];
       else if (G4String(argv[i]) == "-a") showAll = true;
+      else if (G4String(argv[i]) == "--oldbeam") useOldBeam = true;
       else {
          PrintUsage();
          return 1;
       }
    }
 
+   if(useOldBeam){
+      G4cout << "Use Old Beam" << G4endl;
+   }
+   
    // Remove?
    // Choose the Random engine
    CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
@@ -110,7 +116,7 @@ int main(int argc, char **argv)
    runManager->SetUserInitialization(physicsList);
 
    // Primary generator action and User action intialization
-   runManager->SetUserInitialization(new BIActionInitialization());
+   runManager->SetUserInitialization(new BIActionInitialization(useOldBeam));
 
    // Initialize G4 kernel
    //

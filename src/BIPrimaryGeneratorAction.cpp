@@ -33,7 +33,7 @@ G4Mutex mutexInPGA = G4MUTEX_INITIALIZER;
 // In case without, this code looks like working well...
 G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = 0;
 */
-BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
+BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag)
    : G4VUserPrimaryGeneratorAction(),
      fProtonGun(0),
      fEneFnc(nullptr)
@@ -71,10 +71,16 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction()
    fProtonGun->SetParticleEnergy(fEnergy);
 
    TFile *file = new TFile("randomSource.root", "OPEN");
-   fHisSource = (TH2D*)file->Get("fHisMap");
+   fHisSource = (TH2D*)file->Get("HisMap");
    fHisSource->SetName("fHisSource");
 
    DefineCommands();
+
+   if(oldBeamFlag)
+      GunPointer = &BIPrimaryGeneratorAction::OldGun;
+   else
+      GunPointer = &BIPrimaryGeneratorAction::NewGun;
+   
 }
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
@@ -82,15 +88,18 @@ BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
    delete fProtonGun;
 }
 
-void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
+void BIPrimaryGeneratorAction::OldGun()
 {
    G4double coneTheta = 15.*deg;
-   G4ThreeVector particleVec = GetParVec(coneTheta);
+   GetParVec(coneTheta);
    fEnergy = fEneFnc->GetRandom() * MeV;
+}
 
-   //G4ThreeVector particleVec = GetParVecEne();
-   fProtonGun->SetParticleMomentumDirection(particleVec);
-
+void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
+{
+   (this->*GunPointer)(); // Not good name!
+   
+   fProtonGun->SetParticleMomentumDirection(fParVec);
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
    fProtonGun->SetParticleEnergy(fEnergy);
    fProtonGun->GeneratePrimaryVertex(event);
@@ -98,9 +107,9 @@ void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
    G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
    anaMan->FillNtupleIColumn(1, 0, 11);
    anaMan->FillNtupleDColumn(1, 1, fEnergy);
-   anaMan->FillNtupleDColumn(1, 2, particleVec.x());
-   anaMan->FillNtupleDColumn(1, 3, particleVec.y());
-   anaMan->FillNtupleDColumn(1, 4, particleVec.z());
+   anaMan->FillNtupleDColumn(1, 2, fParVec.x());
+   anaMan->FillNtupleDColumn(1, 3, fParVec.y());
+   anaMan->FillNtupleDColumn(1, 4, fParVec.z());
    anaMan->AddNtupleRow(1);
 
    G4AutoLock lock(&mutexInPGA);
@@ -109,25 +118,20 @@ void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 
 }
 
-G4ThreeVector BIPrimaryGeneratorAction::GetParVec(G4double limit)
+void BIPrimaryGeneratorAction::GetParVec(G4double limit)
 {
    G4double theta = acos(1. - G4UniformRand() * (1. - cos(limit)));
    G4double phi = G4UniformRand() * 2. * CLHEP::pi;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);
-   G4ThreeVector particleVec = G4ThreeVector(vx, vy, vz);
-
-   return particleVec;
+   fParVec = G4ThreeVector(vx, vy, vz);
 }
 
-G4ThreeVector BIPrimaryGeneratorAction::GetParVecEne()
+void BIPrimaryGeneratorAction::NewGun()
 {
    G4double x, y;
-   while(1){// HisSource should be changed start with 0
-      fHisSource->GetRandom2(x, y);
-      if(x >= 78) break;
-   }
+   fHisSource->GetRandom2(x, y);
 
    fEnergy = pow(10., (y - 152.) / fDy) * 20;
 
@@ -136,9 +140,7 @@ G4ThreeVector BIPrimaryGeneratorAction::GetParVecEne()
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);
-   G4ThreeVector particleVec = G4ThreeVector(vx, vy, vz);
-
-   return particleVec;
+   fParVec = G4ThreeVector(vx, vy, vz);
 }
 
 void BIPrimaryGeneratorAction::DefineCommands()

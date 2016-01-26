@@ -16,20 +16,23 @@ class TH2D;
 class BIPrimaryGeneratorAction: public G4VUserPrimaryGeneratorAction
 {
 public:
-   BIPrimaryGeneratorAction();
+   BIPrimaryGeneratorAction(G4bool oldBeamFlag);
    virtual ~BIPrimaryGeneratorAction();
 
    virtual void GeneratePrimaries(G4Event *);
 
 private:
-   G4ThreeVector GetParVec(G4double limit);
+   void GetParVec(G4double limit);
    G4ParticleGun *fProtonGun;
    
    void SetSourceZ(G4double);
    G4double fZPosition;
 
 //For random generator
-   G4ThreeVector GetParVecEne();
+   void NewGun();
+   void OldGun();
+   void (BIPrimaryGeneratorAction::*GunPointer)();
+   
    const G4double fDx = (458. - 78.) / 15.;
    const G4double fDy = (332 - 152) / (log10(60.) - log10(20.));
 
@@ -39,6 +42,7 @@ private:
    TH2D *fHisSource;
    TF1 *fEneFnc;
    G4double fEnergy;
+   G4ThreeVector fParVec;
 };
 
 #endif

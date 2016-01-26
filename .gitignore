@@ -13,6 +13,7 @@ Makefile
 *.so
 *.d
 *~
+result*.root
 tmp.*
 Makefile
 

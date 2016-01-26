@@ -4,21 +4,23 @@
 #include "BIEventAction.hpp"
 
 
-BIActionInitialization::BIActionInitialization()
+BIActionInitialization::BIActionInitialization(G4bool beamFlag)
    : G4VUserActionInitialization()
-{}
+{
+   fUseOldBeam = beamFlag;
+}
 
 BIActionInitialization::~BIActionInitialization()
 {}
 
 void BIActionInitialization::BuildForMaster() const
 {
-   SetUserAction(new BIRunAction);
+   SetUserAction(new BIRunAction());
 }
 
 void BIActionInitialization::Build() const
 {
-   SetUserAction(new BIPrimaryGeneratorAction());
+   SetUserAction(new BIPrimaryGeneratorAction(fUseOldBeam));
    SetUserAction(new BIRunAction());
    SetUserAction(new BIEventAction());
 }
