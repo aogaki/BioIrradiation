@@ -21,11 +21,11 @@
 #include "G4UImanager.hh"
 #include "G4UnionSolid.hh"
 #include "G4SubtractionSolid.hh"
+#include "G4IntersectionSolid.hh"
 
 #include "BIDetectorConstruction.hpp"
 #include "BICommonSD.hpp"
 #include "BISmallSD.hpp"
-
 
 #ifdef NOTCPP11
 #include <sstream>
@@ -67,6 +67,7 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid)
      fHolderMat(nullptr),
      fSealingMat(nullptr),
      fCellMat(nullptr),
+     fAttMat(nullptr),
      fFilmMat(nullptr),
      fStuffMat(nullptr)
 {
@@ -74,6 +75,9 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid)
    fForGrid = forGrid;
    fCheckOverlap = true;
    
+   ReadAttData();
+   for(G4int i = 0; i < kAtt; i++) fAttPV[i] = nullptr;
+
    DefineMaterial();
    DefineGeoPar();
    DefineCommands();
@@ -119,7 +123,7 @@ void BIDetectorConstruction::DefineGeoPar()
 
    fWindowL = fCassetteL;
    fWindowW = fCassetteW;
-   fWindowT = 0.5*mm;
+   fWindowT = 1.*mm;
 
    fHolderL = fCassetteL;
    fHolderW = fCassetteW;
@@ -139,26 +143,6 @@ void BIDetectorConstruction::DefineGeoPar()
    fFoilW = fOpeningW;
    fFoilT = 0.5*mm;
 
-   fAttL = fWellPitch;
-
-   for(G4int y = 0; y < 12; y++){ // init with 0. no attenuator
-      for(G4int x = 0; x < 8; x++){
-         fAttT[y][x] = 0;
-      }
-   }
-   std::ifstream attT("att.dat");
-   if(attT.is_open()){
-      std::string buf;
-      for(G4int y = 0; y < 12; y++){
-         for(G4int x = 0; x < 8; x++){
-            attT >> buf;
-            G4cout << atof(buf.c_str()) << G4endl;
-            fAttT[y][x] = atof(buf.c_str());
-         }
-      }
-      attT.close();
-   }
-   
 }
 
 void BIDetectorConstruction::DefineMaterial()
@@ -168,7 +152,8 @@ void BIDetectorConstruction::DefineMaterial()
    // NIST database materials
    fVacuum = manager->FindOrBuildMaterial("G4_Galactic");
    fAir = manager->FindOrBuildMaterial("G4_AIR");
-   fWindowMat = manager->FindOrBuildMaterial("G4_Al");
+   fWindowMat = manager->FindOrBuildMaterial("G4_Ni");
+   fAttMat = fWindowMat;
    fFoilMat = manager->FindOrBuildMaterial("G4_Au");
    fCassetteMat = manager->FindOrBuildMaterial("G4_Al"); // Just testing
    fPlateMat = manager->FindOrBuildMaterial("G4_POLYSTYRENE");
@@ -254,33 +239,25 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    fPlatePV = new G4PVPlacement(nullptr, platePos, plateLV, "Plate", airLV,
                                 false, 0, fCheckOverlap);
 
-   G4String rowMap[8] = {"H", "G", "F", "E", "D", "C", "B", "A"};
-   for(G4int iColumn = 0; iColumn < 12; iColumn++){
-      for(G4int iRow = 0; iRow < 8; iRow++){
-         if(fAttT[iColumn][iRow] != 0.){
+   G4LogicalVolume *attLV[kAtt];
+   G4double attR = 75.*mm;
+   G4double attOffset = -fAirT / 2.;
+   for(G4int i = 0; i < kAtt; i++){
+      if(fAttT[i] > 0.){
 #ifdef NOTCPP11
-            G4String name = "Att" + rowMap[iRow] + itos(iColumn + 1);
+         G4String name = "Att" + itos(kAtt - i);
 #else
-            G4String name = "Att" + rowMap[iRow] + std::to_string(iColumn + 1);
+         G4String name = "Att" + std::to_string(kAtt - i);
 #endif
-            G4cout << name <<"\t"<< fAttT[iColumn][iRow]  << G4endl;
-            G4double t = fAttT[iColumn][iRow]*um;
-            G4LogicalVolume *attLV = ConstructAtt(name, t);
-            G4double xStart = -(fWellPitch * 11) / 2.;
-            G4double yStart = -(fWellPitch * 7) / 2.;
-            G4double xPos = xStart + iColumn * fWellPitch;
-            G4double yPos = yStart + iRow * fWellPitch;
-            //G4double zPos = -fAirT / 2. + fAirGap - t / 2;
-            G4double zPos = -fAirT / 2. + t / 2;
-            //G4double zPos = -fWindowT / 2. - t / 2;
-            G4ThreeVector attPos = G4ThreeVector(xPos, yPos, zPos);
-            fAttPV[iColumn * 8 + iRow] =
-               new G4PVPlacement(nullptr, attPos, attLV, name, airLV,
-                                 false, 0, fCheckOverlap);
-         }
+         attLV[i] = ConstructAtt(name, attR, fAttT[i]);
+         G4double zPos = attOffset + fAttT[i] / 2.;
+         G4ThreeVector attPos = G4ThreeVector(0., 0., zPos);
+         fAttPV[i] = new G4PVPlacement(nullptr, attPos, attLV[i], name, airLV,
+                                       false, 0, fCheckOverlap);
       }
+      attR -= 1.*mm;
    }
-   
+
    G4LogicalVolume *filmLV = ConstructFilm();
    G4double filmZ = plateZ + fPlateH / 2. + fFilmT / 2.;
    G4ThreeVector filmPos = G4ThreeVector(0., 0., filmZ);
@@ -568,12 +545,20 @@ G4LogicalVolume *BIDetectorConstruction::ConstructSealing()
    return sealingLV;
 }
 
-G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double t)
+G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R, G4double T)
 {
-   G4Box *attS = new G4Box(name, fAttL / 2., fAttL / 2., t / 2.);
-   G4LogicalVolume *attLV = new G4LogicalVolume(attS, fPlateMat, name);
+   G4LogicalVolume *attLV;
+   
+   G4Tubs *attS = new G4Tubs("layer", R - 1.*mm, R, T / 2., 0., 360.*deg);
+   
+   if(R > fPlateW / 2.){
+      G4Box *airS = new G4Box("Air", fPlateL / 2., fPlateW / 2., fAirT);
+      G4IntersectionSolid *intS = new G4IntersectionSolid(name, attS, airS);
+      attLV = new G4LogicalVolume(intS, fAttMat, name);
+   }
+   else attLV = new G4LogicalVolume(attS, fAttMat, name);
 
-   G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Brown());
+   G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Green());
    visAttributes->SetVisibility(true);
    attLV->SetVisAttributes(visAttributes);
    fVisAttributes.push_back(visAttributes);
@@ -591,7 +576,7 @@ void BIDetectorConstruction::ConstructSDandField()
    else{
       G4VSensitiveDetector *CommonSD = new BICommonSD("Common",
                                                       "CommonHitsCollection");
-
+ 
       G4LogicalVolumeStore *lvStore = G4LogicalVolumeStore::GetInstance();
       std::vector<G4LogicalVolume*>::const_iterator it;
       for(it = lvStore->begin(); it != lvStore->end(); it++){
@@ -599,6 +584,7 @@ void BIDetectorConstruction::ConstructSDandField()
             SetSensitiveDetector((*it)->GetName(), CommonSD);
       }
    }
+
 }
 
 void BIDetectorConstruction::DefineCommands()
@@ -756,4 +742,27 @@ void BIDetectorConstruction::SetAirGapT(G4double t)
    fFilmPV->SetTranslation(filmPos);
 
    G4RunManager::GetRunManager()->GeometryHasBeenModified();
+}
+
+void BIDetectorConstruction::ReadAttData()
+{
+   std::ifstream fin("att.dat");
+   if(!fin.is_open()){
+      G4cout << "Attenuator data file not found." << G4endl;
+      exit(0);
+   }
+
+   fAttH = 0.;
+   G4int it = 0;
+   std::string buf;
+   while(1){
+      fin >> buf;
+      if(it >= kAtt || fin.eof()) break;
+      fAttT[it] = stol(buf)*um;
+      G4cout << buf <<"\t"<< fAttT[it] << G4endl;
+      if(fAttT[it] > fAttH) fAttH = fAttT[it];
+      it++;
+   }
+   
+   fin.close();
 }
