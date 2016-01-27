@@ -36,8 +36,8 @@ private:
    void OldGun();
    void (BIPrimaryGeneratorAction::*GunPointer)();
    
-   static const G4double kDx = (458. - 78.) / 15.;
-   static const G4double kDy = (332 - 152) / (log10(60.) - log10(20.));
+   G4double fDx;
+   G4double fDy;
 
    G4GenericMessenger *fMessenger;
    void DefineCommands();

@@ -41,6 +41,9 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
    fUseOldGun = oldBeamFlag;
    fForGrid = gridFlag;
    
+   fDx = (458. - 78.) / 15.;
+   fDy = (332 - 152) / (log10(60.) - log10(20.));
+
    G4AutoLock lock(&mutexInPGA);
    
    Int_t seed = G4UniformRand() * 1000000;
@@ -143,9 +146,9 @@ void BIPrimaryGeneratorAction::NewGun()
    G4double x, y;
    fHisSource->GetRandom2(x, y);
 
-   fEnergy = pow(10., (y - 152.) / kDy) * 20;
+   fEnergy = pow(10., (y - 152.) / fDy) * 20;
 
-   G4double theta = CLHEP::pi * ((x - 78.) / kDx) / 180.;
+   G4double theta = CLHEP::pi * ((x - 78.) / fDx) / 180.;
    G4double phi = G4UniformRand() * 2. * CLHEP::pi;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
