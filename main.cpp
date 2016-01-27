@@ -38,6 +38,7 @@ namespace
              << " -a Show all trajectory (default show only ploton)\n"
              << " --oldbeam Using Green's article beam profile\n"
              << " --grid For Grid system, output is only a few parameters\n"
+             << " --tile Using tile attenuator\n"
              << G4endl;
    }
 }
@@ -68,11 +69,13 @@ int main(int argc, char **argv)
    G4bool showAll = false;
    G4bool useOldBeam = false;
    G4bool forGrid = false;
+   G4bool useTile = false;
    for (G4int i = 1; i < argc; i++) {
       if (G4String(argv[i]) == "-m") macro = argv[++i];
       else if (G4String(argv[i]) == "-a") showAll = true;
       else if (G4String(argv[i]) == "--oldbeam") useOldBeam = true;
       else if (G4String(argv[i]) == "--grid") forGrid = true;
+      else if (G4String(argv[i]) == "--tile") useTile = true;
       else {
          PrintUsage();
          return 1;
@@ -109,7 +112,7 @@ int main(int argc, char **argv)
    // Set mandatory initialization classes
    //
    // Detector construction
-   runManager->SetUserInitialization(new BIDetectorConstruction(forGrid));
+   runManager->SetUserInitialization(new BIDetectorConstruction(forGrid, useTile));
 
    // Physics list
    //G4VModularPhysicsList *physicsList = new FTFP_BERT;
