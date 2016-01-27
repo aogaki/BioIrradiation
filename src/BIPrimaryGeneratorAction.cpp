@@ -143,9 +143,9 @@ void BIPrimaryGeneratorAction::NewGun()
    G4double x, y;
    fHisSource->GetRandom2(x, y);
 
-   fEnergy = pow(10., (y - 152.) / fDy) * 20;
+   fEnergy = pow(10., (y - 152.) / kDy) * 20;
 
-   G4double theta = CLHEP::pi * ((x - 78.) / fDx) / 180.;
+   G4double theta = CLHEP::pi * ((x - 78.) / kDx) / 180.;
    G4double phi = G4UniformRand() * 2. * CLHEP::pi;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
