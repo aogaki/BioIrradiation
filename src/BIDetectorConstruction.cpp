@@ -76,7 +76,7 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
    fUseTileAtt = useTile;
    fCheckOverlap = true;
    
-   ReadAttData();
+   if(!fUseTileAtt) ReadAttData();
    for(G4int i = 0; i < kAtt; i++) fAttPV[i] = nullptr;
    for(G4int i = 0; i < 96; i++) fTileAttPV[i] = nullptr;
 
@@ -814,23 +814,24 @@ void BIDetectorConstruction::SetAirGapT(G4double t)
 
 void BIDetectorConstruction::ReadAttData()
 {
+   for(G4int i = 0; i < kAtt; i++) fAttT[i] = 0;
    std::ifstream fin("att.dat");
    if(!fin.is_open()){
-      G4cout << "Attenuator data file not found." << G4endl;
-      exit(0);
+      G4cout << "Attenuator data file not found. Use all zero" << G4endl;
    }
-
-   fAttH = 0.;
-   G4int it = 0;
-   std::string buf;
-   while(1){
-      fin >> buf;
-      if(it >= kAtt || fin.eof()) break;
-      fAttT[it] = stol(buf)*um;
-      G4cout << buf <<"\t"<< fAttT[it] << G4endl;
-      if(fAttT[it] > fAttH) fAttH = fAttT[it];
-      it++;
-   }
+   else{
+      fAttH = 0.;
+      G4int it = 0;
+      std::string buf;
+      while(1){
+         fin >> buf;
+         if(it >= kAtt || fin.eof()) break;
+         fAttT[it] = stol(buf)*um;
+         G4cout << buf <<"\t"<< fAttT[it] << G4endl;
+         if(fAttT[it] > fAttH) fAttH = fAttT[it];
+         it++;
+      }
    
-   fin.close();
+      fin.close();
+   }
 }
