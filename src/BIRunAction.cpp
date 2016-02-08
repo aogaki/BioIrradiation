@@ -59,7 +59,7 @@ void BIRunAction::BeginOfRunAction(const G4Run *)
     
       anaMan->CreateNtuple("InitPar", "Initial Parameters");
       anaMan->CreateNtupleIColumn(1, "PDGCode");
-      anaMan->CreateNtupleDColumn(1, "TotalEnergy");
+      anaMan->CreateNtupleDColumn(1, "Energy");
       anaMan->CreateNtupleDColumn(1, "vx");
       anaMan->CreateNtupleDColumn(1, "vy");
       anaMan->CreateNtupleDColumn(1, "vz");
