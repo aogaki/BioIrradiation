@@ -282,11 +282,11 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
                G4double xPos = xStart + iColumn * fWellPitch;
                G4double yPos = yStart + iRow * fWellPitch;
                //G4double zPos = -fAirT / 2. + fAirGap - t / 2;
-               G4double zPos = -fAirT / 2. + t / 2;
-               //G4double zPos = -fWindowT / 2. - t / 2;
+               //G4double zPos = -fAirT / 2. + t / 2;
+               G4double zPos = -fWindowT / 2. - t / 2;
                G4ThreeVector attPos = G4ThreeVector(xPos, yPos, zPos);
                fTileAttPV[iColumn * 8 + iRow] =
-                  new G4PVPlacement(nullptr, attPos, attLV, name, airLV,
+                  new G4PVPlacement(nullptr, attPos, attLV, name, fWorldLV,
                                     false, 0, fCheckOverlap);
             }
          }
@@ -295,7 +295,8 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    else {
       G4LogicalVolume *attLV[kAtt];
       G4double attR = 75.*mm;
-      G4double attOffset = -fAirT / 2.;
+      //G4double attOffset = -fAirT / 2.;
+      G4double attOffset = -fWindowT / 2.;
       for(G4int i = 0; i < kAtt; i++){
          if(fAttT[i] > 0.){
 #ifdef NOTCPP11
@@ -304,9 +305,9 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
             G4String name = "Att" + std::to_string(kAtt - i);
 #endif
             attLV[i] = ConstructAtt(name, attR, fAttT[i]);
-            G4double zPos = attOffset + fAttT[i] / 2.;
+            G4double zPos = attOffset - fAttT[i] / 2.;
             G4ThreeVector attPos = G4ThreeVector(0., 0., zPos);
-            fAttPV[i] = new G4PVPlacement(nullptr, attPos, attLV[i], name, airLV,
+            fAttPV[i] = new G4PVPlacement(nullptr, attPos, attLV[i], name, fWorldLV,
                                           false, 0, fCheckOverlap);
          }
          attR -= 1.*mm;
