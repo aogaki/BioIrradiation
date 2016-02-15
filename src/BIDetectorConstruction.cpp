@@ -71,12 +71,16 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
      fFilmMat(nullptr),
      fStuffMat(nullptr)
 {
+   fAttFile = "tile.att";
    fCut = false;
    fForGrid = forGrid;
    fUseTileAtt = useTile;
    fCheckOverlap = true;
    
-   if(!fUseTileAtt) ReadAttData();
+   if(!fUseTileAtt){
+      fAttFile = "circle.att";
+      ReadAttData();
+   }
    for(G4int i = 0; i < kAtt; i++) fAttPV[i] = nullptr;
    for(G4int i = 0; i < 96; i++) fTileAttPV[i] = nullptr;
 
@@ -154,7 +158,7 @@ void BIDetectorConstruction::DefineGeoPar()
             fTileAttT[y][x] = 0;
          }
       }
-      std::ifstream attT("att.dat");
+      std::ifstream attT(fAttFile);
       if(attT.is_open()){
          std::string buf;
          for(G4int y = 0; y < 12; y++){
@@ -816,7 +820,7 @@ void BIDetectorConstruction::SetAirGapT(G4double t)
 void BIDetectorConstruction::ReadAttData()
 {
    for(G4int i = 0; i < kAtt; i++) fAttT[i] = 0;
-   std::ifstream fin("att.dat");
+   std::ifstream fin(fAttFile);
    if(!fin.is_open()){
       G4cout << "Attenuator data file not found. Use all zero" << G4endl;
    }

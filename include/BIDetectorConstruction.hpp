@@ -131,6 +131,7 @@ private:
    G4double fOpeningL;
    G4double fOpeningW;
 
+   G4String fAttFile;
    void ReadAttData();
    G4LogicalVolume *ConstructAtt(G4String, G4double, G4double);
    static const G4int kAtt = 75;
