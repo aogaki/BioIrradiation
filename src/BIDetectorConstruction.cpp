@@ -130,7 +130,7 @@ void BIDetectorConstruction::DefineGeoPar()
 
    fWindowL = fCassetteL;
    fWindowW = fCassetteW;
-   fWindowT = 0.5*mm;
+   fWindowT = 1.0*mm;
 
    fHolderL = fCassetteL;
    fHolderW = fCassetteW;
@@ -624,8 +624,8 @@ G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R,
    
    G4Tubs *attS = new G4Tubs("layer", R - 1.*mm, R, T / 2., 0., 360.*deg);
    
-   if(R > fPlateW / 2.){
-      G4Box *airS = new G4Box("Air", fPlateL / 2., fPlateW / 2., fAirT);
+   if(R > fOpeningW / 2.){
+      G4Box *airS = new G4Box("Air", fOpeningL / 2., fOpeningW / 2., fAirT);
       G4IntersectionSolid *intS = new G4IntersectionSolid(name, attS, airS);
       attLV = new G4LogicalVolume(intS, fAttMat, name);
    }

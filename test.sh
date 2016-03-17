@@ -1,5 +1,5 @@
 #!/bin/bash
-for((i=$1;i<=$2;i++))
+for((i=$2;i>=$1;i--))
 do
     suffix=`printf %04d $i`
     ./BI -m test.mac --grid --oldbeam --tile
