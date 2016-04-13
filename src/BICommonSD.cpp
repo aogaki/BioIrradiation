@@ -29,6 +29,7 @@ void BICommonSD::Initialize(G4HCofThisEvent *hce)
 
    G4int hcID
       = G4SDManager::GetSDMpointer()->GetCollectionID(collectionName[0]);
+   G4cout << "hcID = " << hcID << G4endl;
    hce->AddHitsCollection(hcID, fHitsCollection);
 }
 

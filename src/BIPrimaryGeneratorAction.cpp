@@ -67,7 +67,7 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
    G4int nPar = 1;
    fProtonGun = new G4ParticleGun(nPar);
 
-   fZPosition = -300.*mm;
+   fZPosition = -450.*mm;
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
 
    G4ParticleDefinition *proton = parTable->FindParticle("proton");

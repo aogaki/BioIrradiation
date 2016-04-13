@@ -76,7 +76,8 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
    fForGrid = forGrid;
    fUseTileAtt = useTile;
    fCheckOverlap = true;
-   
+   kAttPitch = G4double(attPitch) * um;
+
    if(!fUseTileAtt){
       fAttFile = "circle.att";
       ReadAttData();
@@ -302,7 +303,7 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
       //G4double attOffset = -fAirT / 2.;
       G4double attOffset = -fWindowT / 2.;
       for(G4int i = 0; i < kAtt; i++){
-         if(fAttT[i] > 0.){
+         if(fAttT[i] > 0. && attR < 70.*mm){
 #ifdef NOTCPP11
             G4String name = "Att" + itos(kAtt - i);
 #else
@@ -314,7 +315,7 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
             fAttPV[i] = new G4PVPlacement(nullptr, attPos, attLV[i], name, fWorldLV,
                                           false, 0, fCheckOverlap);
          }
-         attR -= 1.*mm;
+         attR -= kAttPitch;
       }
    }
    
@@ -621,9 +622,11 @@ G4LogicalVolume *BIDetectorConstruction::ConstructTileAtt(G4String name, G4doubl
 G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R, G4double T)
 {
    G4LogicalVolume *attLV;
-   
-   G4Tubs *attS = new G4Tubs("layer", R - 1.*mm, R, T / 2., 0., 360.*deg);
-   
+
+   G4double innerR = R - kAttPitch;
+   if(innerR < 0.) innerR = 0.;
+   G4Tubs *attS = new G4Tubs("layer", innerR, R, T / 2., 0., 360.*deg);
+      
    if(R > fOpeningW / 2.){
       G4Box *airS = new G4Box("Air", fOpeningL / 2., fOpeningW / 2., fAirT);
       G4IntersectionSolid *intS = new G4IntersectionSolid(name, attS, airS);
@@ -819,7 +822,8 @@ void BIDetectorConstruction::SetAirGapT(G4double t)
 
 void BIDetectorConstruction::ReadAttData()
 {
-   for(G4int i = 0; i < kAtt; i++) fAttT[i] = 0;
+   for(G4int i = 0; i < kAtt; i++) fAttT[i] = i * um * 10;
+   /*
    std::ifstream fin(fAttFile);
    if(!fin.is_open()){
       G4cout << "Attenuator data file not found. Use all zero" << G4endl;
@@ -839,4 +843,5 @@ void BIDetectorConstruction::ReadAttData()
    
       fin.close();
    }
+*/
 }

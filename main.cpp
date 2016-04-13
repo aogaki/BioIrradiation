@@ -92,7 +92,7 @@ int main(int argc, char **argv)
    // Remove?
    // Choose the Random engine
    CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
-   G4int seed = GetRandomSeed();
+   unsigned int seed = GetRandomSeed();
    if(seed == 0) seed = time(0);
    G4cout << "\nseed = " << seed << G4endl;
    CLHEP::HepRandom::setTheSeed(seed);

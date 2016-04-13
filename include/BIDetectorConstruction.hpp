@@ -134,18 +134,17 @@ private:
    G4String fAttFile;
    void ReadAttData();
    G4LogicalVolume *ConstructAtt(G4String, G4double, G4double);
-#ifdef NOTCPP11
+
    static const G4int attArea = 75000; // in um
-   static const G4int attPitch = 1000; // floating point can not be used 
+   //static const G4int attPitch = 1000; // floating point can not be used before C++11 
+   static const G4int attPitch = 5000; // floating point can not be used before C++11 
    static const G4int kAtt = attArea / attPitch;
-#else
-   static constexpr G4double attArea = 75.;
-   static constexpr G4double attPitch = 1.;
-   static constexpr G4int kAtt = attArea / attPitch;
-#endif
-   //static const G4double attArea = 70.;
-   //static const G4double attPitch = 1.;
-   //static const G4int kAtt = 75;   
+
+   //static constexpr G4double attArea = 75.;
+   //static constexpr G4double attPitch = 1.;
+   //static constexpr G4int kAtt = attArea / attPitch;
+   G4double kAttPitch;
+   
    G4double fAttT[kAtt];
    G4double fAttH; // sum of fAttT
    G4VPhysicalVolume *fAttPV[kAtt];
