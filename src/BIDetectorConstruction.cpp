@@ -609,7 +609,7 @@ G4LogicalVolume *BIDetectorConstruction::ConstructSealing()
 G4LogicalVolume *BIDetectorConstruction::ConstructTileAtt(G4String name, G4double t)
 {
    G4Box *attS = new G4Box(name, fTileAttL / 2., fTileAttL / 2., t / 2.);
-   G4LogicalVolume *attLV = new G4LogicalVolume(attS, fPlateMat, name);
+   G4LogicalVolume *attLV = new G4LogicalVolume(attS, fAttMat, name);
 
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Brown());
    visAttributes->SetVisibility(true);
