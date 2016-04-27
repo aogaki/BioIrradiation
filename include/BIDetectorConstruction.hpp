@@ -135,10 +135,10 @@ private:
    void ReadAttData();
    G4LogicalVolume *ConstructAtt(G4String, G4double, G4double);
 
-   static const G4int attArea = 75000; // in um
-   //static const G4int attPitch = 1000; // floating point can not be used before C++11 
-   static const G4int attPitch = 5000; // floating point can not be used before C++11 
-   static const G4int kAtt = attArea / attPitch;
+   static const G4int fAttArea = 70000; // in um
+   static const G4int fAttPitch = 1000; // floating point can not be used before C++11 
+   //static const G4int attPitch = 5000; // floating point can not be used before C++11 
+   static const G4int kAtt = fAttArea / fAttPitch;
 
    //static constexpr G4double attArea = 75.;
    //static constexpr G4double attPitch = 1.;

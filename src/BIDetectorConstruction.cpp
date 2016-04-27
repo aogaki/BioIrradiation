@@ -76,7 +76,7 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
    fForGrid = forGrid;
    fUseTileAtt = useTile;
    fCheckOverlap = true;
-   kAttPitch = G4double(attPitch) * um;
+   kAttPitch = fAttPitch * um;
 
    if(!fUseTileAtt){
       fAttFile = "circle.att";
@@ -131,7 +131,7 @@ void BIDetectorConstruction::DefineGeoPar()
 
    fWindowL = fCassetteL;
    fWindowW = fCassetteW;
-   fWindowT = 1.0*mm;
+   fWindowT = 0.5*mm;
 
    fHolderL = fCassetteL;
    fHolderW = fCassetteW;
@@ -299,11 +299,11 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    }
    else {
       G4LogicalVolume *attLV[kAtt];
-      G4double attR = 75.*mm;
+      G4double attR = fAttArea*um;
       //G4double attOffset = -fAirT / 2.;
       G4double attOffset = -fWindowT / 2.;
       for(G4int i = 0; i < kAtt; i++){
-         if(fAttT[i] > 0. && attR < 70.*mm){
+         if(fAttT[i] > 0.){
 #ifdef NOTCPP11
             G4String name = "Att" + itos(kAtt - i);
 #else
@@ -315,6 +315,7 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
             fAttPV[i] = new G4PVPlacement(nullptr, attPos, attLV[i], name, fWorldLV,
                                           false, 0, fCheckOverlap);
          }
+         attOffset -= fAttT[i];
          attR -= kAttPitch;
       }
    }
@@ -623,9 +624,7 @@ G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R,
 {
    G4LogicalVolume *attLV;
 
-   G4double innerR = R - kAttPitch;
-   if(innerR < 0.) innerR = 0.;
-   G4Tubs *attS = new G4Tubs("layer", innerR, R, T / 2., 0., 360.*deg);
+   G4Tubs *attS = new G4Tubs("layer", 0., R, T / 2., 0., 360.*deg);
       
    if(R > fOpeningW / 2.){
       G4Box *airS = new G4Box("Air", fOpeningL / 2., fOpeningW / 2., fAirT);
@@ -822,8 +821,8 @@ void BIDetectorConstruction::SetAirGapT(G4double t)
 
 void BIDetectorConstruction::ReadAttData()
 {
-   for(G4int i = 0; i < kAtt; i++) fAttT[i] = i * um * 10;
-   /*
+   G4double thickness[kAtt];
+
    std::ifstream fin(fAttFile);
    if(!fin.is_open()){
       G4cout << "Attenuator data file not found. Use all zero" << G4endl;
@@ -835,13 +834,17 @@ void BIDetectorConstruction::ReadAttData()
       while(1){
          fin >> buf;
          if(it >= kAtt || fin.eof()) break;
-         fAttT[it] = stol(buf)*um;
-         G4cout << buf <<"\t"<< fAttT[it] << G4endl;
-         if(fAttT[it] > fAttH) fAttH = fAttT[it];
+         thickness[it] = stol(buf)*um;
+         G4cout << buf <<"\t"<< thickness[it] << G4endl;
+         if(thickness[it] > fAttH) fAttH = thickness[it];
          it++;
       }
    
       fin.close();
    }
-*/
+
+   for(G4int i = 0; i < kAtt; i++){
+      if(i == 0) fAttT[i] = thickness[i];
+      else fAttT[i] = thickness[i] - thickness[i - 1];
+   }
 }
