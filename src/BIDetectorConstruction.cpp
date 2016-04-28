@@ -826,6 +826,8 @@ void BIDetectorConstruction::ReadAttData()
    std::ifstream fin(fAttFile);
    if(!fin.is_open()){
       G4cout << "Attenuator data file not found. Use all zero" << G4endl;
+      for(G4int i = 0; i < kAtt; i++)
+         fAttT[i] = 0;
    }
    else{
       fAttH = 0.;
@@ -841,10 +843,15 @@ void BIDetectorConstruction::ReadAttData()
       }
    
       fin.close();
+
+      for(G4int i = 0; i < kAtt; i++){
+         if(i == 0) fAttT[i] = thickness[i];
+         else if(thickness[i] > thickness[i - 1])fAttT[i] = thickness[i] - thickness[i - 1];
+         else {
+            thickness[i] = (thickness[i + 1] + thickness[i - 1]) / 2.;
+            fAttT[i] = thickness[i] - thickness[i - 1];
+         }
+      }
    }
 
-   for(G4int i = 0; i < kAtt; i++){
-      if(i == 0) fAttT[i] = thickness[i];
-      else fAttT[i] = thickness[i] - thickness[i - 1];
-   }
 }
