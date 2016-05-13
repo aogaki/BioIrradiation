@@ -133,7 +133,7 @@ private:
 
    G4String fAttFile;
    void ReadAttData();
-   G4LogicalVolume *ConstructAtt(G4String, G4double, G4double);
+   G4LogicalVolume *ConstructAtt(G4String, G4double, G4double, G4Color);
 
    static const G4int fAttArea = 70000; // in um
    static const G4int fAttPitch = 1000; // floating point can not be used before C++11 

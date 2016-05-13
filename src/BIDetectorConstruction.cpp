@@ -50,6 +50,7 @@ G4String itos(const G4int val)
 BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
    : G4VUserDetectorConstruction(),
      fWorldLV(nullptr),
+     fMessenger(nullptr),
      fWindowPV(nullptr),
      fFoilPV(nullptr),
      fAirPV(nullptr),
@@ -91,7 +92,34 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
 }
 
 BIDetectorConstruction::~BIDetectorConstruction()
-{}
+{
+   if(fWorldLV != nullptr) fWorldLV = nullptr;
+
+   if(fMessenger != nullptr) fMessenger = nullptr;
+
+   if(fWindowPV != nullptr) fWindowPV = nullptr;
+   if(fFoilPV != nullptr) fFoilPV = nullptr;
+   if(fAirPV != nullptr) fAirPV = nullptr;
+   if(fSealingPV != nullptr) fSealingPV = nullptr;
+   if(fHolderPV != nullptr) fHolderPV = nullptr;
+   if(fPlatePV != nullptr) fPlatePV = nullptr;
+   if(fFilmPV != nullptr) fFilmPV = nullptr;
+   if(fCassettePV != nullptr) fCassettePV = nullptr;
+   
+   if(fVacuum != nullptr) fVacuum = nullptr;
+   if(fAir != nullptr) fAir = nullptr;
+   if(fWindowMat != nullptr) fWindowMat = nullptr;
+   if(fFoilMat != nullptr) fFoilMat = nullptr;
+   if(fCassetteMat != nullptr) fCassetteMat = nullptr;
+   if(fPlateMat != nullptr) fPlateMat = nullptr;
+   if(fHolderMat != nullptr) fHolderMat = nullptr;
+   if(fSealingMat != nullptr) fSealingMat = nullptr;
+   if(fCellMat != nullptr) fCellMat = nullptr;
+   if(fAttMat != nullptr) fAttMat = nullptr;
+   if(fFilmMat != nullptr) fFilmMat = nullptr;
+   if(fStuffMat != nullptr) fStuffMat = nullptr;
+
+}
 
 void BIDetectorConstruction::DefineGeoPar()
 {
@@ -302,6 +330,16 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
       G4double attR = fAttArea*um;
       //G4double attOffset = -fAirT / 2.;
       G4double attOffset = -fWindowT / 2.;
+      G4Color col[1000]; // Shoud be larger than
+      G4int colIt = 0;
+      G4double colPitch = 0.1;
+      for(G4double rCol = colPitch; rCol <= 1.0; rCol += colPitch){
+         for(G4double gCol = colPitch; gCol <= 1.0; gCol += colPitch){
+            for(G4double bCol = colPitch; bCol <= 1.0; bCol += colPitch){
+               col[colIt++] = G4Color(rCol, gCol, bCol, 1.0);
+            }
+         }
+      }
       for(G4int i = 0; i < kAtt; i++){
          if(fAttT[i] > 0.){
 #ifdef NOTCPP11
@@ -309,7 +347,7 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
 #else
             G4String name = "Att" + std::to_string(kAtt - i);
 #endif
-            attLV[i] = ConstructAtt(name, attR, fAttT[i]);
+            attLV[i] = ConstructAtt(name, attR, fAttT[i], col[i * (1000 / kAtt)]);
             G4double zPos = attOffset - fAttT[i] / 2.;
             G4ThreeVector attPos = G4ThreeVector(0., 0., zPos);
             fAttPV[i] = new G4PVPlacement(nullptr, attPos, attLV[i], name, fWorldLV,
@@ -620,7 +658,8 @@ G4LogicalVolume *BIDetectorConstruction::ConstructTileAtt(G4String name, G4doubl
    return attLV;
 }
 
-G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R, G4double T)
+G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R, G4double T,
+                                                     G4Color col)
 {
    G4LogicalVolume *attLV;
 
@@ -633,7 +672,7 @@ G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R,
    }
    else attLV = new G4LogicalVolume(attS, fAttMat, name);
 
-   G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Green());
+   G4VisAttributes *visAttributes = new G4VisAttributes(col);
    visAttributes->SetVisibility(true);
    attLV->SetVisAttributes(visAttributes);
    fVisAttributes.push_back(visAttributes);
@@ -846,7 +885,7 @@ void BIDetectorConstruction::ReadAttData()
 
       for(G4int i = 0; i < kAtt; i++){
          if(i == 0) fAttT[i] = thickness[i];
-         else if(thickness[i] > thickness[i - 1])fAttT[i] = thickness[i] - thickness[i - 1];
+         else if(thickness[i] > thickness[i - 1]) fAttT[i] = thickness[i] - thickness[i - 1];
          else {
             thickness[i] = (thickness[i + 1] + thickness[i - 1]) / 2.;
             fAttT[i] = thickness[i] - thickness[i - 1];
