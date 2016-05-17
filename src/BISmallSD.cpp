@@ -44,6 +44,14 @@ G4bool BISmallSD::ProcessHits(G4Step *step, G4TouchableHistory */*history*/)
    G4ThreeVector position =  postStepPoint->GetPosition();
    newHit->SetPosition(position);
 
+   G4Track *track = step->GetTrack();   
+   G4ParticleDefinition *particle = track->GetDefinition();
+   G4int pdgCode = particle->GetPDGEncoding();
+   newHit->SetPDGCode(pdgCode);
+
+   G4int trackID = track->GetTrackID();
+   newHit->SetTrackID(trackID);
+
    fHitsCollection->insert(newHit);
    return true;
 }

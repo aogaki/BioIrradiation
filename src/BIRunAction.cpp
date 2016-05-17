@@ -33,6 +33,8 @@ void BIRunAction::BeginOfRunAction(const G4Run *)
       anaMan->CreateNtupleDColumn(0, "DepositEnergy");
       anaMan->CreateNtupleDColumn(0, "x");
       anaMan->CreateNtupleDColumn(0, "y");
+      anaMan->CreateNtupleIColumn(0, "TrackID");
+      anaMan->CreateNtupleIColumn(0, "PDGCode");    
    }
    else{
       anaMan->CreateNtupleIColumn(0, "EventID");

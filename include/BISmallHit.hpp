@@ -27,9 +27,18 @@ public:
    void SetPosition(G4ThreeVector pos) {fPosition = pos;};
    G4ThreeVector GetPosition() {return fPosition;};
 
+   void SetTrackID(G4int id) {fTrackID = id;};
+   G4int GetTrackID() {return fTrackID;};
+
+   void SetPDGCode(G4int code) {fPDGCode = code;};
+   G4int GetPDGCode() {return fPDGCode;};
+
 private:
    G4double fDepositEnergy;
    G4ThreeVector fPosition;
+
+   G4int fTrackID;
+   G4int fPDGCode;
 
 };
 
