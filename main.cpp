@@ -25,13 +25,12 @@
 // Remove?
 #include "Randomize.hh"
 
-#include "BIPhysicsList.hpp"
+#include "BIDNAPhysicsList.hpp"
 #include "BIDetectorConstruction.hpp"
 #include "BIActionInitialization.hpp"
 
 
-namespace
-{
+namespace {
    void PrintUsage()
    {
       G4cerr << " Usage: " << G4endl;
@@ -46,18 +45,17 @@ namespace
 
 unsigned int GetRandomSeed()
 {
-   unsigned int seed; 
-   std::ifstream file ("/dev/urandom", std::ios::binary);
-   if (file.is_open()){
+   unsigned int seed;
+   std::ifstream file("/dev/urandom", std::ios::binary);
+   if (file.is_open()) {
       char *memblock;
       int size = sizeof(int);
       memblock = new char[size];
       file.read(memblock, size);
       file.close();
-      seed = *reinterpret_cast<int*>(memblock);
+      seed = *reinterpret_cast<int *>(memblock);
       delete[] memblock;
-   }
-   else{
+   } else {
       seed = 0;
    }
 
@@ -83,18 +81,18 @@ int main(int argc, char **argv)
       }
    }
 
-   if(useOldBeam){
+   if (useOldBeam) {
       G4cout << "Use Old Beam" << G4endl;
    }
-   if(forGrid){
+   if (forGrid) {
       G4cout << "Small output mode" << G4endl;
    }
-   
+
    // Remove?
    // Choose the Random engine
    CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
    unsigned int seed = GetRandomSeed();
-   if(seed == 0) seed = time(0);
+   if (seed == 0) seed = time(0);
    G4cout << "\nseed = " << seed << G4endl;
    CLHEP::HepRandom::setTheSeed(seed);
    G4Random::setTheSeed(seed);
@@ -120,7 +118,7 @@ int main(int argc, char **argv)
    //G4VModularPhysicsList *physicsList = new QGSP_BERT_HP;
    //G4VModularPhysicsList *physicsList = new QGSP_BIC_HP;
    G4VModularPhysicsList *physicsList = new Shielding;
-   //G4VModularPhysicsList *physicsList = new BIPhysicsList;
+   //G4VModularPhysicsList *physicsList = new BIDNAPhysicsList;
    physicsList->SetVerboseLevel(0);
    //physicsList->SetCutValue(1.*um, "proton");
    //physicsList->SetCuts();
@@ -138,7 +136,7 @@ int main(int argc, char **argv)
    // Initialize visualization
    G4VisManager *visManager = new G4VisExecutive;
    visManager->Initialize();
-   
+
    if (!showAll) { //Show only proton
       G4TrajectoryParticleFilter *filterp = new G4TrajectoryParticleFilter;
       filterp->Add("proton");
