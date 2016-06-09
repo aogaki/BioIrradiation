@@ -177,6 +177,8 @@ int main(int argc, char **argv)
    delete visManager;
 #endif
 
+   G4cout << "Here?" << G4endl;
+   
    delete runManager;
 
    return 0;

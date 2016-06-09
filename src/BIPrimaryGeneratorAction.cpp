@@ -35,7 +35,8 @@ G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = 0;
 */
 BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gridFlag)
    : G4VUserPrimaryGeneratorAction(),
-     fProtonGun(0),
+     fProtonGun(nullptr),
+     fHisSource(nullptr),
      fEneFnc(nullptr)
 {
    fUseOldGun = oldBeamFlag;
@@ -67,7 +68,8 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
    G4int nPar = 1;
    fProtonGun = new G4ParticleGun(nPar);
 
-   fZPosition = -300.*mm;
+   //fZPosition = -300.*mm;
+   fZPosition = -160.*mm; // Minimum distance for new beam
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
 
    G4ParticleDefinition *proton = parTable->FindParticle("proton");
@@ -93,7 +95,7 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 {
-   delete fProtonGun;
+   if(fProtonGun != nullptr) delete fProtonGun;
 }
 
 void BIPrimaryGeneratorAction::OldGun()

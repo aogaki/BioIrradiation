@@ -93,31 +93,32 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
 
 BIDetectorConstruction::~BIDetectorConstruction()
 {
-   if(fWorldLV != nullptr) fWorldLV = nullptr;
 
-   if(fMessenger != nullptr) fMessenger = nullptr;
+   if(fWorldLV != nullptr) delete fWorldLV;
 
-   if(fWindowPV != nullptr) fWindowPV = nullptr;
-   if(fFoilPV != nullptr) fFoilPV = nullptr;
-   if(fAirPV != nullptr) fAirPV = nullptr;
-   if(fSealingPV != nullptr) fSealingPV = nullptr;
-   if(fHolderPV != nullptr) fHolderPV = nullptr;
-   if(fPlatePV != nullptr) fPlatePV = nullptr;
-   if(fFilmPV != nullptr) fFilmPV = nullptr;
-   if(fCassettePV != nullptr) fCassettePV = nullptr;
+   if(fMessenger != nullptr) delete fMessenger;
+
+   if(fWindowPV != nullptr) delete fWindowPV;
+   if(fFoilPV != nullptr) delete fFoilPV;
+   if(fAirPV != nullptr) delete fAirPV;
+   if(fSealingPV != nullptr) delete fSealingPV;
+   if(fHolderPV != nullptr) delete fHolderPV;
+   if(fPlatePV != nullptr) delete fPlatePV;
+   if(fFilmPV != nullptr) delete fFilmPV;
+   if(fCassettePV != nullptr) delete fCassettePV;
    
-   if(fVacuum != nullptr) fVacuum = nullptr;
-   if(fAir != nullptr) fAir = nullptr;
-   if(fWindowMat != nullptr) fWindowMat = nullptr;
-   if(fFoilMat != nullptr) fFoilMat = nullptr;
-   if(fCassetteMat != nullptr) fCassetteMat = nullptr;
-   if(fPlateMat != nullptr) fPlateMat = nullptr;
-   if(fHolderMat != nullptr) fHolderMat = nullptr;
-   if(fSealingMat != nullptr) fSealingMat = nullptr;
-   if(fCellMat != nullptr) fCellMat = nullptr;
-   if(fAttMat != nullptr) fAttMat = nullptr;
-   if(fFilmMat != nullptr) fFilmMat = nullptr;
-   if(fStuffMat != nullptr) fStuffMat = nullptr;
+   if(fVacuum != nullptr) delete fVacuum;
+   if(fAir != nullptr) delete fAir;
+   if(fWindowMat != nullptr) delete fWindowMat;
+   if(fFoilMat != nullptr) delete fFoilMat;
+   if(fCassetteMat != nullptr) delete fCassetteMat;
+   if(fPlateMat != nullptr) delete fPlateMat;
+   if(fHolderMat != nullptr) delete fHolderMat;
+   if(fSealingMat != nullptr) delete fSealingMat;
+   if(fCellMat != nullptr) delete fCellMat;
+   if(fAttMat != nullptr) delete fAttMat;
+   if(fFilmMat != nullptr) delete fFilmMat;
+   if(fStuffMat != nullptr) delete fStuffMat;
 
 }
 
