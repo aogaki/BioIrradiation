@@ -36,6 +36,7 @@ namespace {
       G4cerr << " Usage: " << G4endl;
       G4cerr << " ./LG [-m macro filename]\n"
              << " -a Show all trajectory (default show only ploton)\n"
+             << " -q Using only quarter region of the plate\n"
              << " --oldbeam Using Green's article beam profile\n"
              << " --grid For Grid system, output is only a few parameters\n"
              << " --tile Using tile attenuator\n"
@@ -69,9 +70,11 @@ int main(int argc, char **argv)
    G4bool useOldBeam = false;
    G4bool forGrid = false;
    G4bool useTile = false;
+   G4bool useQuarter = false;
    for (G4int i = 1; i < argc; i++) {
       if (G4String(argv[i]) == "-m") macro = argv[++i];
       else if (G4String(argv[i]) == "-a") showAll = true;
+      else if (G4String(argv[i]) == "-q") useQuarter = true;
       else if (G4String(argv[i]) == "--oldbeam") useOldBeam = true;
       else if (G4String(argv[i]) == "--grid") forGrid = true;
       else if (G4String(argv[i]) == "--tile") useTile = true;
@@ -126,7 +129,7 @@ int main(int argc, char **argv)
    runManager->SetUserInitialization(physicsList);
 
    // Primary generator action and User action intialization
-   runManager->SetUserInitialization(new BIActionInitialization(useOldBeam, forGrid));
+   runManager->SetUserInitialization(new BIActionInitialization(useOldBeam, forGrid, useQuarter));
 
    // Initialize G4 kernel
    //

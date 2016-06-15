@@ -8,7 +8,7 @@
 class BIActionInitialization : public G4VUserActionInitialization
 {
 public:
-   BIActionInitialization(G4bool beamFlag, G4bool gridFlag);
+   BIActionInitialization(G4bool beamFlag, G4bool gridFlag, G4bool quarterFlag);
    virtual ~BIActionInitialization();
 
    virtual void BuildForMaster() const;
@@ -17,6 +17,7 @@ public:
 private:
    G4bool fUseOldBeam;
    G4bool fForGrid;
+   G4bool fUseQuarter;
 };
 
 #endif

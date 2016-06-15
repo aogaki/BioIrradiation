@@ -33,7 +33,7 @@ G4Mutex mutexInPGA = G4MUTEX_INITIALIZER;
 // In case without, this code looks like working well...
 G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = 0;
 */
-BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gridFlag)
+BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gridFlag, G4bool quarterFlag)
    : G4VUserPrimaryGeneratorAction(),
      fProtonGun(nullptr),
      fHisSource(nullptr),
@@ -41,6 +41,7 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
 {
    fUseOldGun = oldBeamFlag;
    fForGrid = gridFlag;
+   fUseQuarter = quarterFlag;
    
    fDx = (458. - 78.) / 15.;
    fDy = (332 - 152) / (log10(60.) - log10(20.));
@@ -68,8 +69,8 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
    G4int nPar = 1;
    fProtonGun = new G4ParticleGun(nPar);
 
-   //fZPosition = -300.*mm;
-   fZPosition = -160.*mm; // Minimum distance for new beam
+   fZPosition = -300.*mm;
+   //fZPosition = -160.*mm; // Minimum distance for new beam
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
 
    G4ParticleDefinition *proton = parTable->FindParticle("proton");
@@ -152,6 +153,7 @@ void BIPrimaryGeneratorAction::NewGun()
 
    G4double theta = CLHEP::pi * ((x - 78.) / fDx) / 180.;
    G4double phi = G4UniformRand() * 2. * CLHEP::pi;
+   if(fUseQuarter) phi = G4UniformRand() * 0.5 * CLHEP::pi;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);
