@@ -877,13 +877,19 @@ void BIDetectorConstruction::ReadAttData()
          fin >> buf;
          if(it >= kAtt || fin.eof()) break;
          thickness[it] = stol(buf)*um;
-         G4cout << buf <<"\t"<< thickness[it] << G4endl;
+         //G4cout << buf <<"\t"<< thickness[it] << G4endl;
          if(thickness[it] > fAttH) fAttH = thickness[it];
          it++;
       }
    
       fin.close();
 
+      for(G4int i = 0; i < kAtt; i++){
+         if(i <9 ) thickness[i] = thickness[9];
+         else if (i > 66) thickness[i] = thickness[66];
+         G4cout << thickness[i] << G4endl;
+      }
+      
       for(G4int i = 0; i < kAtt; i++){
          if(i == 0) fAttT[i] = thickness[i];
          else if(thickness[i] > thickness[i - 1]) fAttT[i] = thickness[i] - thickness[i - 1];
