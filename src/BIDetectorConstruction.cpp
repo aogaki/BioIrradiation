@@ -93,33 +93,7 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
 
 BIDetectorConstruction::~BIDetectorConstruction()
 {
-
-   if(fWorldLV != nullptr) delete fWorldLV;
-
-   if(fMessenger != nullptr) delete fMessenger;
-
-   if(fWindowPV != nullptr) delete fWindowPV;
-   if(fFoilPV != nullptr) delete fFoilPV;
-   if(fAirPV != nullptr) delete fAirPV;
-   if(fSealingPV != nullptr) delete fSealingPV;
-   if(fHolderPV != nullptr) delete fHolderPV;
-   if(fPlatePV != nullptr) delete fPlatePV;
-   if(fFilmPV != nullptr) delete fFilmPV;
-   if(fCassettePV != nullptr) delete fCassettePV;
-   
-   if(fVacuum != nullptr) delete fVacuum;
-   if(fAir != nullptr) delete fAir;
-   if(fWindowMat != nullptr) delete fWindowMat;
-   if(fFoilMat != nullptr) delete fFoilMat;
-   if(fCassetteMat != nullptr) delete fCassetteMat;
-   if(fPlateMat != nullptr) delete fPlateMat;
-   if(fHolderMat != nullptr) delete fHolderMat;
-   if(fSealingMat != nullptr) delete fSealingMat;
-   if(fCellMat != nullptr) delete fCellMat;
-   if(fAttMat != nullptr) delete fAttMat;
-   if(fFilmMat != nullptr) delete fFilmMat;
-   if(fStuffMat != nullptr) delete fStuffMat;
-
+   // delete PV pointers?
 }
 
 void BIDetectorConstruction::DefineGeoPar()
