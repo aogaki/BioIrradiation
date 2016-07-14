@@ -868,8 +868,8 @@ void BIDetectorConstruction::ReadAttData()
          if(i == 0) fAttT[i] = thickness[i];
          else if(thickness[i] > thickness[i - 1]) fAttT[i] = thickness[i] - thickness[i - 1];
          else {
-            thickness[i] = (thickness[i + 1] + thickness[i - 1]) / 2.;
-            fAttT[i] = thickness[i] - thickness[i - 1];
+            thickness[i] = thickness[i - 1];
+            fAttT[i] = 0;
          }
       }
    }
