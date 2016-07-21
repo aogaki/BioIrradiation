@@ -28,6 +28,7 @@
 #include "BIDNAPhysicsList.hpp"
 #include "BIDetectorConstruction.hpp"
 #include "BIActionInitialization.hpp"
+#include "BIPrimaryGeneratorAction.hpp"
 
 
 namespace {
@@ -37,7 +38,7 @@ namespace {
       G4cerr << " ./LG [-m macro filename]\n"
              << " -a Show all trajectory (default show only ploton)\n"
              << " -q Using only quarter region of the plate\n"
-             << " --oldbeam Using Green's article beam profile\n"
+             << " -b [beam profile number] Choose beam profile\n"
              << " --grid For Grid system, output is only a few parameters\n"
              << " --tile Using tile attenuator\n"
              << G4endl;
@@ -46,6 +47,8 @@ namespace {
 
 unsigned int GetRandomSeed()
 {
+   // Using /dev/urandom for generating random number.
+   // If it is not, I have to think solution.
    unsigned int seed;
    std::ifstream file("/dev/urandom", std::ios::binary);
    if (file.is_open()) {
@@ -67,7 +70,7 @@ int main(int argc, char **argv)
 {
    G4String macro = "";
    G4bool showAll = false;
-   G4bool useOldBeam = false;
+   BeamType beamType = kThirdBeam;
    G4bool forGrid = false;
    G4bool useTile = false;
    G4bool useQuarter = false;
@@ -75,7 +78,17 @@ int main(int argc, char **argv)
       if (G4String(argv[i]) == "-m") macro = argv[++i];
       else if (G4String(argv[i]) == "-a") showAll = true;
       else if (G4String(argv[i]) == "-q") useQuarter = true;
-      else if (G4String(argv[i]) == "--oldbeam") useOldBeam = true;
+      else if (G4String(argv[i]) == "-b"){
+         G4String type = *argv[++i];
+         if(type == "1") beamType = kFirstBeam;
+         else if(type == "2") beamType = kSecondBeam;
+         else if(type == "3") beamType = kThirdBeam;
+         else{
+            G4cout << "Beam type is wrong" << G4endl;
+            PrintUsage();
+            return 1;
+         }
+      }
       else if (G4String(argv[i]) == "--grid") forGrid = true;
       else if (G4String(argv[i]) == "--tile") useTile = true;
       else {
@@ -84,9 +97,8 @@ int main(int argc, char **argv)
       }
    }
 
-   if (useOldBeam) {
-      G4cout << "Use Old Beam" << G4endl;
-   }
+   G4cout << "Beam type is " << beamType << G4endl;
+
    if (forGrid) {
       G4cout << "Small output mode" << G4endl;
    }
@@ -129,7 +141,7 @@ int main(int argc, char **argv)
    runManager->SetUserInitialization(physicsList);
 
    // Primary generator action and User action intialization
-   runManager->SetUserInitialization(new BIActionInitialization(useOldBeam, forGrid, useQuarter));
+   runManager->SetUserInitialization(new BIActionInitialization(beamType, forGrid, useQuarter));
 
    // Initialize G4 kernel
    //

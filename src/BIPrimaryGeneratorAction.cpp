@@ -33,13 +33,13 @@ G4Mutex mutexInPGA = G4MUTEX_INITIALIZER;
 // In case without, this code looks like working well...
 G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = 0;
 */
-BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gridFlag, G4bool quarterFlag)
+BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gridFlag, G4bool quarterFlag)
    : G4VUserPrimaryGeneratorAction(),
      fProtonGun(nullptr),
      fHisSource(nullptr),
      fEneFnc(nullptr)
 {
-   fUseOldGun = oldBeamFlag;
+   fBeamType = beamType;
    fForGrid = gridFlag;
    fUseQuarter = quarterFlag;
    
@@ -51,20 +51,6 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
    Int_t seed = G4UniformRand() * 1000000;
    G4cout << "Seed of PGA = " << seed << G4endl;
    gRandom->SetSeed(seed);
-   
-/*
-   if(!fEneFnc_G4MT_TLS_) fEneFnc_G4MT_TLS_ = new TF1("fEneFnc", "expo(0)+expo(2)+gaus(4)", 0., 30.);
-   fEneFnc = fEneFnc_G4MT_TLS_;
-*/
-   fEneFnc = new TF1("fEneFnc", "expo(0)+expo(2)+gaus(4)", 0., 30.);
-   fEneFnc->SetParameter(0, 2.67164e+01);
-   fEneFnc->SetParameter(1, -8.35969e-01);
-   fEneFnc->SetParameter(2, 2.15801e+01);
-   fEneFnc->SetParameter(3, -7.66820e-02);
-   fEneFnc->SetParameter(4, 3.79820e+09);
-   fEneFnc->SetParameter(5, 8.94835e+00);
-   fEneFnc->SetParameter(6, 3.04310e+00);
-   fEnergy = fEneFnc->GetRandom() * MeV;   
    
    G4int nPar = 1;
    fProtonGun = new G4ParticleGun(nPar);
@@ -87,11 +73,36 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gr
 
 // Pointer of Function is not good for readable code?
 // And also, use if statement does not make program slow.
-   if(oldBeamFlag)
-      GunPointer = &BIPrimaryGeneratorAction::OldGun;
-   else
-      GunPointer = &BIPrimaryGeneratorAction::NewGun;
+   if(fBeamType == kFirstBeam){
+      //if(!fEneFnc_G4MT_TLS_) fEneFnc_G4MT_TLS_ = new TF1("fEneFnc", "expo(0)+expo(2)+gaus(4)", 0., 30.);
+      //fEneFnc = fEneFnc_G4MT_TLS_;
+      fEneFnc = new TF1("fEneFnc", "expo(0)+expo(2)+gaus(4)", 0., 30.);
+      fEneFnc->SetParameter(0, 2.67164e+01);
+      fEneFnc->SetParameter(1, -8.35969e-01);
+      fEneFnc->SetParameter(2, 2.15801e+01);
+      fEneFnc->SetParameter(3, -7.66820e-02);
+      fEneFnc->SetParameter(4, 3.79820e+09);
+      fEneFnc->SetParameter(5, 8.94835e+00);
+      fEneFnc->SetParameter(6, 3.04310e+00);
 
+      GunFuncPointer = &BIPrimaryGeneratorAction::FirstBeamGun;
+   }
+   else if(fBeamType == kSecondBeam)
+      GunFuncPointer = &BIPrimaryGeneratorAction::SecondBeamGun;
+   
+   else if(fBeamType == kThirdBeam){
+      fEneFnc = new TF1("fncEne", "exp([0]*x)", 0., 100.);
+      fEneFnc->SetParameter(0, -4.77205e-02);
+      
+      fAngFnc = new TF1("fAngFnc", "exp([0]*x)", 0., 20.);
+      fAngFnc->SetParameter(0, -8.98131e-02);
+
+      GunFuncPointer = &BIPrimaryGeneratorAction::ThirdBeamGun;
+   }
+   else{
+      G4cout << "Beam type is wrong.  Please check it." << G4endl;
+      exit(0);
+   }
 }
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
@@ -99,20 +110,9 @@ BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
    if(fProtonGun != nullptr) delete fProtonGun;
 }
 
-void BIPrimaryGeneratorAction::OldGun()
-{
-   G4double coneTheta = 15.*deg;
-   GetParVec(coneTheta);
-   fEnergy = fEneFnc->GetRandom() * MeV;
-}
-
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 {
-   //(this->*GunPointer)(); // Not good name!
-   // Now I use if statement switching
-   
-   if(fUseOldGun) OldGun();
-   else NewGun();
+   (this->*GunFuncPointer)();
    
    fProtonGun->SetParticleMomentumDirection(fParVec);
    fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
@@ -144,16 +144,39 @@ void BIPrimaryGeneratorAction::GetParVec(G4double limit)
    fParVec = G4ThreeVector(vx, vy, vz);
 }
 
-void BIPrimaryGeneratorAction::NewGun()
+void BIPrimaryGeneratorAction::FirstBeamGun()
+{
+   G4double coneTheta = 15.*deg;
+   GetParVec(coneTheta);
+   fEnergy = fEneFnc->GetRandom() * MeV;
+}
+
+void BIPrimaryGeneratorAction::SecondBeamGun()
 {
    G4double x, y;
    fHisSource->GetRandom2(x, y);
 
-   fEnergy = pow(10., (y - 152.) / fDy) * 20;
+   fEnergy = pow(10., (y - 152.) / fDy) * 20 * MeV;
 
    G4double theta = CLHEP::pi * ((x - 78.) / fDx) / 180.;
    G4double phi = G4UniformRand() * 2. * CLHEP::pi;
    if(fUseQuarter) phi = G4UniformRand() * 0.5 * CLHEP::pi;
+   G4double vx = sin(theta) * cos(phi);
+   G4double vy = sin(theta) * sin(phi);
+   G4double vz = cos(theta);
+   fParVec = G4ThreeVector(vx, vy, vz);
+}
+
+void BIPrimaryGeneratorAction::ThirdBeamGun()
+{
+   fEnergy = fEneFnc->GetRandom() * MeV;
+   
+   G4double theta;
+   if(fEnergy > 30.*MeV)
+      theta = fAngFnc->GetRandom() * deg;
+   else
+      theta = acos(1. - G4UniformRand() * (1. - cos(20.*deg)));
+   G4double phi = G4UniformRand() * 2. * CLHEP::pi;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);

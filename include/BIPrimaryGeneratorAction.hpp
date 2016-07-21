@@ -7,6 +7,12 @@
 #include "G4Threading.hh"
 
 
+enum BeamType{ // I wanna use enum class.  But impossible.
+   kFirstBeam,
+   kSecondBeam,
+   kThirdBeam
+};
+
 class G4Event;
 class G4ParticleGun;
 class G4GenericMessenger;
@@ -16,13 +22,13 @@ class TH2D;
 class BIPrimaryGeneratorAction: public G4VUserPrimaryGeneratorAction
 {
 public:
-   BIPrimaryGeneratorAction(G4bool oldBeamFlag, G4bool gridFlag, G4bool quarterFlag);
+   BIPrimaryGeneratorAction(BeamType beamType, G4bool gridFlag, G4bool quarterFlag);
    virtual ~BIPrimaryGeneratorAction();
 
    virtual void GeneratePrimaries(G4Event *);
 
 private:
-   G4bool fUseOldGun;
+   BeamType fBeamType;
    G4bool fForGrid;
    G4bool fUseQuarter;
    
@@ -33,9 +39,10 @@ private:
    G4double fZPosition;
 
 //For random generator
-   void NewGun();
-   void OldGun();
-   void (BIPrimaryGeneratorAction::*GunPointer)();
+   void FirstBeamGun();
+   void SecondBeamGun();
+   void ThirdBeamGun();
+   void (BIPrimaryGeneratorAction::*GunFuncPointer)();
    
    G4double fDx;
    G4double fDy;
@@ -45,6 +52,7 @@ private:
 
    TH2D *fHisSource;
    TF1 *fEneFnc;
+   TF1 *fAngFnc;
    G4double fEnergy;
    G4ThreeVector fParVec;
 };
