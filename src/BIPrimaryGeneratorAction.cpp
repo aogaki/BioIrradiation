@@ -40,8 +40,12 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
      fEneFnc(nullptr)
 {
    fBeamType = beamType;
+
    fForGrid = gridFlag;
+
    fUseQuarter = quarterFlag;
+   if(fUseQuarter) fPhiLimit = 0.5 * CLHEP::pi;
+   else fPhiLimit = 2. * CLHEP::pi;
    
    fDx = (458. - 78.) / 15.;
    fDy = (332 - 152) / (log10(60.) - log10(20.));
@@ -137,7 +141,7 @@ void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 void BIPrimaryGeneratorAction::GetParVec(G4double limit)
 {
    G4double theta = acos(1. - G4UniformRand() * (1. - cos(limit)));
-   G4double phi = G4UniformRand() * 2. * CLHEP::pi;
+   G4double phi = G4UniformRand() * fPhiLimit;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);
@@ -159,8 +163,7 @@ void BIPrimaryGeneratorAction::SecondBeamGun()
    fEnergy = pow(10., (y - 152.) / fDy) * 20 * MeV;
 
    G4double theta = CLHEP::pi * ((x - 78.) / fDx) / 180.;
-   G4double phi = G4UniformRand() * 2. * CLHEP::pi;
-   if(fUseQuarter) phi = G4UniformRand() * 0.5 * CLHEP::pi;
+   G4double phi = G4UniformRand() * fPhiLimit;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);
@@ -176,7 +179,7 @@ void BIPrimaryGeneratorAction::ThirdBeamGun()
       theta = fAngFnc->GetRandom() * deg;
    else
       theta = acos(1. - G4UniformRand() * (1. - cos(20.*deg)));
-   G4double phi = G4UniformRand() * 2. * CLHEP::pi;
+   G4double phi = G4UniformRand() * fPhiLimit;
    G4double vx = sin(theta) * cos(phi);
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);

@@ -55,6 +55,8 @@ private:
    TF1 *fAngFnc;
    G4double fEnergy;
    G4ThreeVector fParVec;
+
+   G4double fPhiLimit;
 };
 
 #endif
