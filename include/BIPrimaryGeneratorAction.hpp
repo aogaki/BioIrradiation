@@ -7,10 +7,12 @@
 #include "G4Threading.hh"
 
 
-enum BeamType{ // I wanna use enum class.  But impossible.
+enum BeamType{ // I wanna use enum class.  But impossible on Grid (Scientific Linux 6).
    kFirstBeam,
    kSecondBeam,
-   kThirdBeam
+   kThirdBeam,
+
+   kElectronTest
 };
 
 class G4Event;
@@ -18,6 +20,7 @@ class G4ParticleGun;
 class G4GenericMessenger;
 class TF1;
 class TH2D;
+class TFile;
 
 class BIPrimaryGeneratorAction: public G4VUserPrimaryGeneratorAction
 {
@@ -33,7 +36,7 @@ private:
    G4bool fUseQuarter;
    
    void GetParVec(G4double limit);
-   G4ParticleGun *fProtonGun;
+   G4ParticleGun *fParticleGun;
    
    void SetSourceZ(G4double);
    G4double fZPosition;
@@ -42,6 +45,7 @@ private:
    void FirstBeamGun();
    void SecondBeamGun();
    void ThirdBeamGun();
+   void ElectronTestGun();
    void (BIPrimaryGeneratorAction::*GunFuncPointer)();
    
    G4double fDx;
@@ -50,6 +54,7 @@ private:
    G4GenericMessenger *fMessenger;
    void DefineCommands();
 
+   TFile *fInputFile;
    TH2D *fHisSource;
    TF1 *fEneFnc;
    TF1 *fAngFnc;

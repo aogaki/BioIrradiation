@@ -35,9 +35,11 @@ G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = 0;
 */
 BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gridFlag, G4bool quarterFlag)
    : G4VUserPrimaryGeneratorAction(),
-     fProtonGun(nullptr),
+     fParticleGun(nullptr),
+     fInputFile(nullptr),
      fHisSource(nullptr),
-     fEneFnc(nullptr)
+     fEneFnc(nullptr),
+     fAngFnc(nullptr)
 {
    fBeamType = beamType;
 
@@ -57,20 +59,20 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
    gRandom->SetSeed(seed);
    
    G4int nPar = 1;
-   fProtonGun = new G4ParticleGun(nPar);
+   fParticleGun = new G4ParticleGun(nPar);
 
    fZPosition = -300.*mm;
    //fZPosition = -160.*mm; // Minimum distance for new beam
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
 
    G4ParticleDefinition *proton = parTable->FindParticle("proton");
-   fProtonGun->SetParticleDefinition(proton);
-   fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
-   fProtonGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
-   fProtonGun->SetParticleEnergy(fEnergy);
+   fParticleGun->SetParticleDefinition(proton);
+   fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
+   fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
+   fParticleGun->SetParticleEnergy(fEnergy);
 
-   TFile *file = new TFile("randomSource.root", "OPEN");
-   fHisSource = (TH2D*)file->Get("HisMap");
+   fInputFile = new TFile("randomSource.root", "OPEN");
+   fHisSource = (TH2D*)fInputFile->Get("HisMap");
    fHisSource->SetName("fHisSource");
 
    DefineCommands();
@@ -103,6 +105,11 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
 
       GunFuncPointer = &BIPrimaryGeneratorAction::ThirdBeamGun;
    }
+   else if(fBeamType == kElectronTest){
+      GunFuncPointer = &BIPrimaryGeneratorAction::ElectronTestGun;      
+      G4ParticleDefinition *electron = parTable->FindParticle("e-");
+      fParticleGun->SetParticleDefinition(electron);
+   }
    else{
       G4cout << "Beam type is wrong.  Please check it." << G4endl;
       exit(0);
@@ -111,17 +118,21 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 {
-   if(fProtonGun != nullptr) delete fProtonGun;
+   if(fEneFnc != nullptr) delete fEneFnc;
+   if(fAngFnc != nullptr) delete fAngFnc;
+   if(fHisSource != nullptr) delete fHisSource;
+   fInputFile->Close();
+   if(fParticleGun != nullptr) delete fParticleGun;
 }
 
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
 {
    (this->*GunFuncPointer)();
    
-   fProtonGun->SetParticleMomentumDirection(fParVec);
-   fProtonGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
-   fProtonGun->SetParticleEnergy(fEnergy);
-   fProtonGun->GeneratePrimaryVertex(event);
+   fParticleGun->SetParticleMomentumDirection(fParVec);
+   fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
+   fParticleGun->SetParticleEnergy(fEnergy);
+   fParticleGun->GeneratePrimaryVertex(event);
 
    if(!fForGrid){
       G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
@@ -184,6 +195,13 @@ void BIPrimaryGeneratorAction::ThirdBeamGun()
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);
    fParVec = G4ThreeVector(vx, vy, vz);
+}
+
+void BIPrimaryGeneratorAction::ElectronTestGun()
+{
+   G4double coneTheta = 15.*deg;
+   GetParVec(coneTheta);
+   fEnergy = 1.*MeV;
 }
 
 void BIPrimaryGeneratorAction::DefineCommands()

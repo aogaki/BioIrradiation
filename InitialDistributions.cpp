@@ -5,9 +5,10 @@
 #include "TMath.h"
 
 
-TH1D *HistEnergy;
-TH1D *HistTheta;
-TH1D *HistPhi;
+TH1D *HisEnergy;
+TH1D *HisTheta;
+TH1D *HisCosTheta;
+TH1D *HisPhi;
 
 void InitialDistributions()
 {
@@ -20,7 +21,7 @@ void InitialDistributions()
    inputTree->SetBranchStatus("PDGCode", 0);
 
    Double_t ene;
-   inputTree->SetBranchAddress("TotalEnergy", &ene);
+   inputTree->SetBranchAddress("Energy", &ene);
 
    Double_t vx;
    inputTree->SetBranchAddress("vx", &vx);
@@ -29,17 +30,21 @@ void InitialDistributions()
    Double_t vz;
    inputTree->SetBranchAddress("vz", &vz);
 
-   HistEnergy = new TH1D("HistEnergy", "Initial Energy Distribution", 
-                         700, 0, 70);
-   HistEnergy->SetXTitle("[MeV]");
+   HisEnergy = new TH1D("HisEnergy", "Initial Energy Distribution", 
+                        700, 0, 70);
+   HisEnergy->SetXTitle("[MeV]");
 
-   HistTheta = new TH1D("HistTheta", "Initial Polar Anglular Distribution", 
-                           200, 0, 20);
-   HistTheta->SetXTitle("[deg]");
+   HisTheta = new TH1D("HisTheta", "Initial Polar Anglular Distribution", 
+                       200, 0, 20);
+   HisTheta->SetXTitle("[deg]");
 
-   HistPhi = new TH1D("HistPhi", "Initial Azimuth Anglular Distribution", 
-                      400, -200, 200);
-   HistPhi->SetXTitle("[deg]");
+   HisCosTheta = new TH1D("HisCosTheta", "Initial Polar Anglular Distribution", 
+                          200, cos(TMath::Pi() * 20. / 180.), 1.0);
+   HisCosTheta->SetXTitle("[Cos(deg)]");
+
+   HisPhi = new TH1D("HisPhi", "Initial Azimuth Anglular Distribution", 
+                     400, -200, 200);
+   HisPhi->SetXTitle("[deg]");
 
    const Int_t nEve = inputTree->GetEntries();
    for(Int_t iEve = 0; iEve < nEve; iEve++){
@@ -49,9 +54,12 @@ void InitialDistributions()
       Double_t theta = vec.Theta();
       Double_t phi = vec.Phi();
 
-      HistEnergy->Fill(ene); 
-      HistTheta->Fill(theta * 180. / TMath::Pi());
-      HistPhi->Fill(phi * 180. / TMath::Pi());
+      HisEnergy->Fill(ene); 
+      if(!(ene > 30.)){
+         HisTheta->Fill(theta * 180. / TMath::Pi());
+         HisCosTheta->Fill(vec.CosTheta());
+      }
+      HisPhi->Fill(phi * 180. / TMath::Pi());
 
    }
 

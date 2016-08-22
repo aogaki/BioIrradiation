@@ -83,6 +83,7 @@ int main(int argc, char **argv)
          if(type == "1") beamType = kFirstBeam;
          else if(type == "2") beamType = kSecondBeam;
          else if(type == "3") beamType = kThirdBeam;
+         else if(type == "0") beamType = kElectronTest;
          else{
             G4cout << "Beam type is wrong" << G4endl;
             PrintUsage();
@@ -192,8 +193,6 @@ int main(int argc, char **argv)
    delete visManager;
 #endif
 
-   G4cout << "Here?" << G4endl;
-   
    delete runManager;
 
    return 0;
