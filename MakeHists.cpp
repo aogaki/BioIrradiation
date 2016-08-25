@@ -183,8 +183,8 @@ void MakeHists()
    DefineHists();
 
    TChain *chain = new TChain("BI");
-   //chain->Add("/media/aogaki/Data/BI/*.root");
-   chain->Add("/dev/shm/result*.root");
+   chain->Add("result_t*.root");
+   //chain->Add("/dev/shm/result_t*.root");
 
    chain->SetBranchStatus("*", 0);
 

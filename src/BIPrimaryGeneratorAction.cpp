@@ -74,7 +74,7 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
    fInputFile = new TFile("randomSource.root", "OPEN");
    fHisSource = (TH2D*)fInputFile->Get("HisMap");
    fHisSource->SetName("fHisSource");
-
+   
    DefineCommands();
 
 // Pointer of Function is not good for readable code?
@@ -106,9 +106,17 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
       GunFuncPointer = &BIPrimaryGeneratorAction::ThirdBeamGun;
    }
    else if(fBeamType == kElectronTest){
-      GunFuncPointer = &BIPrimaryGeneratorAction::ElectronTestGun;      
       G4ParticleDefinition *electron = parTable->FindParticle("e-");
       fParticleGun->SetParticleDefinition(electron);
+      //GunFuncPointer = &BIPrimaryGeneratorAction::ElectronTestGun;      
+      // using same distribution as third beam
+      fEneFnc = new TF1("fncEne", "exp([0]*x)", 0., 100.);
+      fEneFnc->SetParameter(0, -4.77205e-02);
+      
+      fAngFnc = new TF1("fAngFnc", "exp([0]*x)", 0., 20.);
+      fAngFnc->SetParameter(0, -8.98131e-02);
+
+      GunFuncPointer = &BIPrimaryGeneratorAction::ThirdBeamGun;
    }
    else{
       G4cout << "Beam type is wrong.  Please check it." << G4endl;
@@ -118,11 +126,11 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 {
-   if(fEneFnc != nullptr) delete fEneFnc;
-   if(fAngFnc != nullptr) delete fAngFnc;
-   if(fHisSource != nullptr) delete fHisSource;
-   fInputFile->Close();
-   if(fParticleGun != nullptr) delete fParticleGun;
+   if(fEneFnc != nullptr) {delete fEneFnc; fEneFnc = nullptr;}
+   if(fAngFnc != nullptr) {delete fAngFnc; fAngFnc = nullptr;}
+   if(fHisSource != nullptr) {delete fHisSource; fHisSource = nullptr;}
+   if(fParticleGun != nullptr) {delete fParticleGun; fParticleGun = nullptr;}
+   if(fInputFile->IsOpen()) fInputFile->Close();
 }
 
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
@@ -201,7 +209,7 @@ void BIPrimaryGeneratorAction::ElectronTestGun()
 {
    G4double coneTheta = 15.*deg;
    GetParVec(coneTheta);
-   fEnergy = 1.*MeV;
+   fEnergy = 20.*MeV;
 }
 
 void BIPrimaryGeneratorAction::DefineCommands()
