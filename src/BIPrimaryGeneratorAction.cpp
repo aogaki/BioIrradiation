@@ -108,15 +108,10 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
    else if(fBeamType == kElectronTest){
       G4ParticleDefinition *electron = parTable->FindParticle("e-");
       fParticleGun->SetParticleDefinition(electron);
-      //GunFuncPointer = &BIPrimaryGeneratorAction::ElectronTestGun;      
-      // using same distribution as third beam
-      fEneFnc = new TF1("fncEne", "exp([0]*x)", 0., 100.);
-      fEneFnc->SetParameter(0, -4.77205e-02);
-      
-      fAngFnc = new TF1("fAngFnc", "exp([0]*x)", 0., 20.);
-      fAngFnc->SetParameter(0, -8.98131e-02);
-
-      GunFuncPointer = &BIPrimaryGeneratorAction::ThirdBeamGun;
+      GunFuncPointer = &BIPrimaryGeneratorAction::ElectronTestGun;      
+      fEneFnc = new TF1("fEneFnc", "expo", 0., 150.); // Using Simple exponential
+      fEneFnc->SetParameter(0, 1); // Do I have to read parameters from file?
+      fEneFnc->SetParameter(1, -3.65095e-01); // This is not good style.
    }
    else{
       G4cout << "Beam type is wrong.  Please check it." << G4endl;
@@ -209,7 +204,8 @@ void BIPrimaryGeneratorAction::ElectronTestGun()
 {
    G4double coneTheta = 15.*deg;
    GetParVec(coneTheta);
-   fEnergy = 20.*MeV;
+   fEnergy = fEneFnc->GetRandom() * MeV;
+   //fEnergy = 20.*MeV;
 }
 
 void BIPrimaryGeneratorAction::DefineCommands()
