@@ -121,6 +121,7 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 {
+   G4AutoLock lock(&mutexInPGA);
    if(fEneFnc != nullptr) {delete fEneFnc; fEneFnc = nullptr;}
    if(fAngFnc != nullptr) {delete fAngFnc; fAngFnc = nullptr;}
    if(fHisSource != nullptr) {delete fHisSource; fHisSource = nullptr;}

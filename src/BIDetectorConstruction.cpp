@@ -18,6 +18,7 @@
 #include "G4GenericMessenger.hh"
 #include "G4RunManager.hh"
 #include "G4LogicalVolumeStore.hh"
+#include "G4PhysicalVolumeStore.hh"
 #include "G4UImanager.hh"
 #include "G4UnionSolid.hh"
 #include "G4SubtractionSolid.hh"
@@ -47,7 +48,7 @@ G4String itos(const G4int val)
 
 #endif
 
-BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
+BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile, G4bool cutGeo)
    : G4VUserDetectorConstruction(),
      fWorldLV(nullptr),
      fMessenger(nullptr),
@@ -73,7 +74,7 @@ BIDetectorConstruction::BIDetectorConstruction(G4bool forGrid, G4bool useTile)
      fStuffMat(nullptr)
 {
    fAttFile = "tile.att";
-   fCut = false;
+   fCutGeo = cutGeo;
    fForGrid = forGrid;
    fUseTileAtt = useTile;
    fCheckOverlap = true;
@@ -345,7 +346,6 @@ G4VPhysicalVolume *BIDetectorConstruction::Construct()
    fCassettePV = new G4PVPlacement(nullptr, cassettePos, cassetteLV, "Cassette", airLV,
                                    false, 0, fCheckOverlap);
 
-
    return worldPV;
 }
 
@@ -428,9 +428,12 @@ G4LogicalVolume *BIDetectorConstruction::ConstructPlate()
    G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", outerS, maskS, nullptr, maskPos);
 
    G4LogicalVolume *outerLV;
-   if(fCut) outerLV = new G4LogicalVolume(halfS, fPlateMat, "Outer");
-   else outerLV = new G4LogicalVolume(outerS, fPlateMat, "Outer");
-
+   if(fCutGeo) outerLV = new G4LogicalVolume(halfS, fPlateMat, "Outer");
+   else{
+      outerLV = new G4LogicalVolume(outerS, fPlateMat, "Outer");
+      delete halfS;
+   }
+   
    visAttributes = new G4VisAttributes(G4Colour::Cyan());
    visAttributes->SetVisibility(true);
    outerLV->SetVisAttributes(visAttributes);
@@ -446,7 +449,7 @@ G4LogicalVolume *BIDetectorConstruction::ConstructPlate()
    G4LogicalVolume *stuffLV = ConstructStuff();
 
    G4int kColumn = 0;
-   if(fCut) kColumn = 6;
+   if(fCutGeo) kColumn = 6;
    
    for(G4int iRow = 0; iRow < 8; iRow++){
       for(G4int iColumn = kColumn; iColumn < 12; iColumn++){
@@ -457,7 +460,7 @@ G4LogicalVolume *BIDetectorConstruction::ConstructPlate()
          G4double zPos = fPlateT / 2. - fPlateH / 2.;
          G4ThreeVector wellPos = G4ThreeVector(xPos, yPos, -zPos);
          G4ThreeVector stuffPos = G4ThreeVector(xPos, yPos, -zPos - fWellH / 2. + fPlateT / 2.);
-         
+
          new G4PVPlacement(plateRot, wellPos, wellLV, "Well", plateLV,
                            false, iRow * 12 + iColumn, fCheckOverlap);
          new G4PVPlacement(plateRot, stuffPos, stuffLV, "Stuff", plateLV,
@@ -474,11 +477,14 @@ G4LogicalVolume *BIDetectorConstruction::ConstructFilm()
 
    G4Box *maskS = new G4Box("Mask", 1.*m / 2., 1.*m / 2., 1.*m / 2.);
    G4ThreeVector maskPos(-1.*m / 2., 0., 0.);
-   G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", filmS, maskS, nullptr, maskPos);
+   G4SubtractionSolid *halfS = new G4SubtractionSolid("Film", filmS, maskS, nullptr, maskPos);
 
    G4LogicalVolume *filmLV;
-   if(fCut) filmLV = new G4LogicalVolume(halfS, fFilmMat, "Film");
-   else filmLV = new G4LogicalVolume(filmS, fFilmMat, "Film");
+   if(fCutGeo) filmLV = new G4LogicalVolume(halfS, fFilmMat, "Film");
+   else{
+      filmLV = new G4LogicalVolume(filmS, fFilmMat, "Film");
+      delete halfS;
+   }
    
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::White());
    visAttributes->SetVisibility(true);
@@ -500,12 +506,15 @@ G4LogicalVolume *BIDetectorConstruction::ConstructCassette()
 
    G4Box *maskS = new G4Box("Mask", 1.*m / 2., 1.*m / 2., 1.*m / 2.);
    G4ThreeVector maskPos(-1.*m / 2., 0., 0.);
-   G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", unionS, maskS, nullptr, maskPos);
+   G4SubtractionSolid *halfS = new G4SubtractionSolid("Casette", unionS, maskS, nullptr, maskPos);
 
    G4LogicalVolume *cassetteLV;
-   if(fCut) cassetteLV = new G4LogicalVolume(halfS, fCassetteMat, "Cassette");
-   else cassetteLV = new G4LogicalVolume(unionS, fCassetteMat, "Cassette");
-
+   if(fCutGeo) cassetteLV = new G4LogicalVolume(halfS, fCassetteMat, "Cassette");
+   else{
+      cassetteLV = new G4LogicalVolume(unionS, fCassetteMat, "Cassette");
+      delete halfS;
+   }
+      
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Yellow());
    visAttributes->SetVisibility(true);
    cassetteLV->SetVisAttributes(visAttributes);
@@ -545,12 +554,15 @@ G4LogicalVolume *BIDetectorConstruction::ConstructSimpleHolder()
    G4SubtractionSolid *holderS = new G4SubtractionSolid("Holder", boardS, openingS);
    G4Box *maskS = new G4Box("Mask", 1.*m / 2., 1.*m / 2., 1.*m / 2.);
    G4ThreeVector maskPos(-1.*m / 2., 0., 0.);
-   G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", holderS, maskS, nullptr, maskPos);
+   G4SubtractionSolid *halfS = new G4SubtractionSolid("Holder", holderS, maskS, nullptr, maskPos);
    
    G4LogicalVolume *holderLV;
-   if(fCut) holderLV = new G4LogicalVolume(halfS, fHolderMat, "Holder");
-   else holderLV = new G4LogicalVolume(holderS, fHolderMat, "Holder");
-
+   if(fCutGeo) holderLV = new G4LogicalVolume(halfS, fHolderMat, "Holder");
+   else{
+      holderLV = new G4LogicalVolume(holderS, fHolderMat, "Holder");
+      delete halfS;
+   }
+   
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Green());
    visAttributes->SetVisibility(true);
    holderLV->SetVisAttributes(visAttributes);
@@ -564,13 +576,16 @@ G4LogicalVolume *BIDetectorConstruction::ConstructWindow()
    G4Box *windowS = new G4Box("Window", fWindowL / 2., fWindowW / 2., fWindowT / 2.);
    G4Box *maskS = new G4Box("Mask", 1.*m / 2., 1.*m / 2., 1.*m / 2.);
    G4ThreeVector maskPos(-1.*m / 2., 0., 0.);
-   G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", windowS, maskS, nullptr, maskPos);
+   G4SubtractionSolid *halfS = new G4SubtractionSolid("Window", windowS, maskS, nullptr, maskPos);
 
    
    G4LogicalVolume *windowLV;
-   if(fCut) windowLV = new G4LogicalVolume(halfS, fWindowMat, "Window");
-   else windowLV = new G4LogicalVolume(windowS, fWindowMat, "Window");
-   
+   if(fCutGeo) windowLV = new G4LogicalVolume(halfS, fWindowMat, "Window");
+   else{
+      windowLV = new G4LogicalVolume(windowS, fWindowMat, "Window");
+      delete halfS;
+   }
+      
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::White());
    visAttributes->SetVisibility(true);
    windowLV->SetVisAttributes(visAttributes);
@@ -584,13 +599,16 @@ G4LogicalVolume *BIDetectorConstruction::ConstructFoil()
    G4Box *foilS = new G4Box("Foil", fFoilL / 2., fFoilW / 2., fFoilT / 2.);
    G4Box *maskS = new G4Box("Mask", 1.*m / 2., 1.*m / 2., 1.*m / 2.);
    G4ThreeVector maskPos(-1.*m / 2., 0., 0.);
-   G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", foilS, maskS, nullptr, maskPos);
+   G4SubtractionSolid *halfS = new G4SubtractionSolid("Foil", foilS, maskS, nullptr, maskPos);
 
    
    G4LogicalVolume *foilLV;
-   if(fCut) foilLV = new G4LogicalVolume(halfS, fFoilMat, "Foil");
-   else foilLV = new G4LogicalVolume(foilS, fFoilMat, "Foil");
-   
+   if(fCutGeo) foilLV = new G4LogicalVolume(halfS, fFoilMat, "Foil");
+   else{
+      foilLV = new G4LogicalVolume(foilS, fFoilMat, "Foil");
+      delete halfS;
+   }
+      
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Red());
    visAttributes->SetVisibility(true);
    foilLV->SetVisAttributes(visAttributes);
@@ -609,8 +627,11 @@ G4LogicalVolume *BIDetectorConstruction::ConstructSealing()
    G4SubtractionSolid *halfS = new G4SubtractionSolid("Sealing", sealingS, maskS, nullptr, maskPos);
 
    G4LogicalVolume *sealingLV;
-   if(fCut) sealingLV = new G4LogicalVolume(halfS, fSealingMat, "Sealing");
-   else sealingLV = new G4LogicalVolume(sealingS, fSealingMat, "Sealing");
+   if(fCutGeo) sealingLV = new G4LogicalVolume(halfS, fSealingMat, "Sealing");
+   else{
+      sealingLV = new G4LogicalVolume(sealingS, fSealingMat, "Sealing");
+      delete halfS;
+   }
    
    G4VisAttributes *visAttributes = new G4VisAttributes(G4Colour::Red());
    visAttributes->SetVisibility(true);
@@ -637,15 +658,19 @@ G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R,
                                                      G4Color col)
 {
    G4LogicalVolume *attLV;
-
+   G4ThreeVector maskPos = G4ThreeVector(0., 0., 0.);
    G4Tubs *attS = new G4Tubs("layer", 0., R, T / 2., 0., 360.*deg);
-      
-   if(R > fOpeningW / 2.){
-      G4Box *airS = new G4Box("Air", fOpeningL / 2., fOpeningW / 2., fAirT);
-      G4IntersectionSolid *intS = new G4IntersectionSolid(name, attS, airS);
-      attLV = new G4LogicalVolume(intS, fAttMat, name);
+   G4Box *maskS;
+   
+   if(fCutGeo){
+      maskS = new G4Box("Mask", fOpeningL / 4., fOpeningW / 2., 1.*m);
+      maskPos = G4ThreeVector(fOpeningL / 4., 0., 0.);
    }
-   else attLV = new G4LogicalVolume(attS, fAttMat, name);
+   else maskS = new G4Box("Mask", fOpeningL / 2., fOpeningW / 2., 1.*m);
+   
+   G4IntersectionSolid *intS = new G4IntersectionSolid(name, attS, maskS, nullptr, maskPos);
+   attLV = new G4LogicalVolume(intS, fAttMat, name);
+   //attLV = new G4LogicalVolume(attS, fAttMat, name);
 
    G4VisAttributes *visAttributes = new G4VisAttributes(col);
    visAttributes->SetVisibility(true);

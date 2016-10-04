@@ -19,7 +19,7 @@
 class BIDetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
-   BIDetectorConstruction(G4bool forGrid, G4bool useTileAtt);
+   BIDetectorConstruction(G4bool forGrid, G4bool useTileAtt, G4bool cutGeo);
    virtual ~BIDetectorConstruction();
 
    virtual G4VPhysicalVolume *Construct();
@@ -34,7 +34,7 @@ public:
    void SetAirGapT(G4double t);
    
 private:
-   G4bool fCut;
+   G4bool fCutGeo;
    G4bool fForGrid;
    G4bool fUseTileAtt;
    
