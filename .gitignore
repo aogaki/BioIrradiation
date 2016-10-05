@@ -9,10 +9,13 @@ G4History.macro
 Makefile
 *.ods
 *.pdf
+*.jpg
+*.jpeg
 *.pcm
 *.so
 *.d
 *~
+*.bu
 result*.root
 tmp.*
 Makefile
