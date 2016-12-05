@@ -63,12 +63,14 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
 
    fZPosition = -300.*mm;
    //fZPosition = -160.*mm; // Minimum distance for new beam
-   G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
 
+   fParVec = G4ThreeVector(0., 0., 1.);
+   
+   G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
    G4ParticleDefinition *proton = parTable->FindParticle("proton");
    fParticleGun->SetParticleDefinition(proton);
    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
-   fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
+   fParticleGun->SetParticleMomentumDirection(fParVec);
    fParticleGun->SetParticleEnergy(fEnergy);
 
    fInputFile = new TFile("randomSource.root", "OPEN");
