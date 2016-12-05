@@ -45,7 +45,6 @@ private:
    void FirstBeamGun();
    void SecondBeamGun();
    void ThirdBeamGun();
-   void ElectronTestGun();
    void (BIPrimaryGeneratorAction::*GunFuncPointer)();
    
    G4double fDx;
