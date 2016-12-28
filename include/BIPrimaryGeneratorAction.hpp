@@ -53,7 +53,6 @@ private:
    G4GenericMessenger *fMessenger;
    void DefineCommands();
 
-   TFile *fInputFile;
    TH2D *fHisSource;
    TF1 *fEneFnc;
    TF1 *fAngFnc;

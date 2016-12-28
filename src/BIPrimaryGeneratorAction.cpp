@@ -36,9 +36,8 @@ G4Mutex mutexInPGA = G4MUTEX_INITIALIZER;
 BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gridFlag, G4bool quarterFlag)
    : G4VUserPrimaryGeneratorAction(),
      fParticleGun(nullptr),
-     fInputFile(nullptr),
      fHisSource(nullptr),
-     //fEneFnc(nullptr),
+     fEneFnc(nullptr),
      fAngFnc(nullptr)
 {
    fBeamType = beamType;
@@ -73,9 +72,12 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
    fParticleGun->SetParticleMomentumDirection(fParVec);
    fParticleGun->SetParticleEnergy(fEnergy);
 
-   fInputFile = new TFile("randomSource.root", "OPEN");
-   fHisSource = (TH2D*)fInputFile->Get("HisMap");
+   TFile *file = new TFile("randomSource.root", "OPEN");
+   fHisSource = (TH2D*)file->Get("HisMap");
    fHisSource->SetName("fHisSource");
+   fHisSource->SetDirectory(0);
+   file->Close();
+   delete file;
    
    DefineCommands();
 
@@ -115,12 +117,11 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
 
 BIPrimaryGeneratorAction::~BIPrimaryGeneratorAction()
 {
-   G4AutoLock lock(&mutexInPGA); // when closing file, this is needed
+   //G4AutoLock lock(&mutexInPGA);
    if(fEneFnc != nullptr) {delete fEneFnc; fEneFnc = nullptr;}
    if(fAngFnc != nullptr) {delete fAngFnc; fAngFnc = nullptr;}
    if(fHisSource != nullptr) {delete fHisSource; fHisSource = nullptr;}
    if(fParticleGun != nullptr) {delete fParticleGun; fParticleGun = nullptr;}
-   if(fInputFile->IsOpen()) fInputFile->Close();
 }
 
 void BIPrimaryGeneratorAction::GeneratePrimaries(G4Event *event)
@@ -161,7 +162,9 @@ void BIPrimaryGeneratorAction::FirstBeamGun()
 {
    G4double coneTheta = 15.*deg;
    GetParVec(coneTheta);
+   G4AutoLock lock(&mutexInPGA);
    fEnergy = fEneFnc->GetRandom() * MeV;
+   // no need to unlock.
 }
 
 void BIPrimaryGeneratorAction::SecondBeamGun()
