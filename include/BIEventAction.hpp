@@ -4,6 +4,8 @@
 #include "G4UserEventAction.hh"
 #include "globals.hh"
 
+#include "BICommonHit.hpp"
+
 
 class BIEventAction : public G4UserEventAction
 {
@@ -16,6 +18,9 @@ public:
 
 private:
    G4bool fForGrid;
+
+   BICommonHitsCollection *GetHitsCollection(G4int hcID, const G4Event *event) const;
+
    G4int fHitsCollectionID;
 };
 

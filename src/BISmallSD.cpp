@@ -9,7 +9,6 @@
 #include "G4VProcess.hh"
 
 #include "BISmallSD.hpp"
-#include "BISmallHit.hpp"
 
 
 BISmallSD::BISmallSD(const G4String &name,
@@ -25,7 +24,7 @@ BISmallSD::~BISmallSD()
 void BISmallSD::Initialize(G4HCofThisEvent *hce)
 {
    fHitsCollection
-      = new BISmallHitsCollection(SensitiveDetectorName, collectionName[0]);
+      = new BICommonHitsCollection(SensitiveDetectorName, collectionName[0]);
 
    G4int hcID
       = G4SDManager::GetSDMpointer()->GetCollectionID(collectionName[0]);
@@ -35,7 +34,7 @@ void BISmallSD::Initialize(G4HCofThisEvent *hce)
 G4bool BISmallSD::ProcessHits(G4Step *step, G4TouchableHistory */*history*/)
 {
    // Recording all steps.  Huge file size!
-   BISmallHit *newHit = new BISmallHit();
+   BICommonHit *newHit = new BICommonHit();
 
    G4double depositEnergy = step->GetTotalEnergyDeposit();
    newHit->SetDepositEnergy(depositEnergy);

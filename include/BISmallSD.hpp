@@ -5,8 +5,7 @@
 #include "G4ThreeVector.hh"
 #include "G4LogicalVolume.hh"
 
-#include "BISmallHit.hpp"
-
+#include "BICommonHit.hpp"
 
 class G4Step;
 class G4HCofThisEvent;
@@ -23,7 +22,7 @@ public:
    virtual G4bool ProcessHits(G4Step *step, G4TouchableHistory *history);
 
 private:
-   BISmallHitsCollection *fHitsCollection;
+   BICommonHitsCollection *fHitsCollection;
 };
 
 #endif

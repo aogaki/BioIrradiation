@@ -23,6 +23,7 @@
 #include "G4UnionSolid.hh"
 #include "G4SubtractionSolid.hh"
 #include "G4IntersectionSolid.hh"
+#include "G4SDManager.hh"
 
 #include "BIDetectorConstruction.hpp"
 #include "BICommonSD.hpp"
@@ -683,19 +684,18 @@ G4LogicalVolume *BIDetectorConstruction::ConstructAtt(G4String name, G4double R,
 void BIDetectorConstruction::ConstructSDandField()
 {
    if(fForGrid){
-      G4VSensitiveDetector *SmallSD = new BICommonSD("Small",
-                                                     "SmallHitsCollection");
-      SetSensitiveDetector("Cell", SmallSD);
+      G4VSensitiveDetector *smallSD = new BISmallSD("SmallSD", "CommonHC");
+      G4SDManager::GetSDMpointer()->AddNewDetector(smallSD);
+      SetSensitiveDetector("Cell", smallSD);
    }
    else{
-      G4VSensitiveDetector *CommonSD = new BICommonSD("Common",
-                                                      "CommonHitsCollection");
- 
+      G4VSensitiveDetector *commonSD = new BICommonSD("CommonSD", "CommonHC");
+      G4SDManager::GetSDMpointer()->AddNewDetector(commonSD); 
       G4LogicalVolumeStore *lvStore = G4LogicalVolumeStore::GetInstance();
       std::vector<G4LogicalVolume*>::const_iterator it;
       for(it = lvStore->begin(); it != lvStore->end(); it++){
          if((*it)->GetName() != "World")
-            SetSensitiveDetector((*it)->GetName(), CommonSD);
+            SetSensitiveDetector((*it)->GetName(), commonSD);
       }
    }
 

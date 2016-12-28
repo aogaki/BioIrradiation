@@ -10,8 +10,6 @@
 #include "g4root.hh"
 
 #include "BIEventAction.hpp"
-#include "BICommonHit.hpp"
-#include "BISmallHit.hpp"
 
 
 BIEventAction::BIEventAction(G4bool gridFlag)
@@ -27,48 +25,40 @@ BIEventAction::BIEventAction(G4bool gridFlag)
 BIEventAction::~BIEventAction()
 {}
 
-void BIEventAction::BeginOfEventAction(const G4Event *)
+BICommonHitsCollection *BIEventAction::GetHitsCollection(G4int hcID, const G4Event *event)
+const
 {
-   if (fHitsCollectionID == -1) {
-      G4SDManager *manager = G4SDManager::GetSDMpointer();
-      if(fForGrid){
-         fHitsCollectionID = manager->GetCollectionID("Small/SmallHitsCollection");
-         if (fHitsCollectionID == -1) {
-            G4cout << "Small/SmallHitsCollection not found" << G4endl;
-            exit(0);
-         }
-      }
-      else {
-         fHitsCollectionID = manager->GetCollectionID("Common/CommonHitsCollection");
-         if (fHitsCollectionID == -1) {
-            G4cout << "Common/CommonHitsCollection not found" << G4endl;
-            exit(0);
-         }
-      }
-   }
+   BICommonHitsCollection *hitsCollection 
+      = static_cast<BICommonHitsCollection *>(
+         event->GetHCofThisEvent()->GetHC(hcID));
+   
+   if ( ! hitsCollection ) {
+      G4ExceptionDescription msg;
+      msg << "Cannot access hitsCollection ID " << hcID; 
+      G4Exception("B4cEventAction::GetHitsCollection()",
+                  "MyCode0003", FatalException, msg);
+   }         
+
+   return hitsCollection;
 }
+
+void BIEventAction::BeginOfEventAction(const G4Event *)
+{}
 
 void BIEventAction::EndOfEventAction(const G4Event *event)
 {
-   G4HCofThisEvent *hce = event->GetHCofThisEvent();
-   if (!hce) {
-      G4cout << "HCE not found: EndOfEventAction@BIEventAction" << G4endl;
-      exit(0);
-   }
-   BICommonHitsCollection *hitsCollection =
-      static_cast<BICommonHitsCollection *>(hce->GetHC(fHitsCollectionID));
-   if (!hitsCollection) {
-      G4cout << "HC not found: EndOfEventAction@BIEventAction" << G4endl;
-      exit(0);
-   }
+   if (fHitsCollectionID == -1)
+      fHitsCollectionID = G4SDManager::GetSDMpointer()->GetCollectionID("CommonHC");
+   
+   BICommonHitsCollection *hc = GetHitsCollection(fHitsCollectionID, event);
 
    G4int eventID = event->GetEventID();
 
    G4AnalysisManager *anaMan = G4AnalysisManager::Instance();
 
-   const G4int kHit = hitsCollection->entries();
+   const G4int kHit = hc->entries();
    for (G4int iHit = 0; iHit < kHit; iHit++) {
-      BICommonHit *newHit = (*hitsCollection)[iHit];
+      BICommonHit *newHit = (*hc)[iHit];
 
       if(fForGrid){
          G4double depositEnergy = newHit->GetDepositEnergy();

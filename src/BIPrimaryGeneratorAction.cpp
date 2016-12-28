@@ -25,20 +25,20 @@
 
 G4int nEveInPGA = 0; // Global variable change to local? 
 G4Mutex mutexInPGA = G4MUTEX_INITIALIZER;
-/*
+
 // For using ROOT classes.
 // When using ROOT classes, it have to be thread local or mutex locked.
 // I don't know _G4MT_TLS_ is truely needed or not.
 // https://indico.cern.ch/event/226961/material-old/0/0?contribId=0
 // In case without, this code looks like working well...
-G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = 0;
-*/
+//G4ThreadLocal TF1 *fEneFnc_G4MT_TLS_ = nullptr;
+
 BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gridFlag, G4bool quarterFlag)
    : G4VUserPrimaryGeneratorAction(),
      fParticleGun(nullptr),
      fInputFile(nullptr),
      fHisSource(nullptr),
-     fEneFnc(nullptr),
+     //fEneFnc(nullptr),
      fAngFnc(nullptr)
 {
    fBeamType = beamType;
@@ -99,7 +99,7 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
       GunFuncPointer = &BIPrimaryGeneratorAction::SecondBeamGun;
    
    else if(fBeamType == kThirdBeam){
-      fEneFnc = new TF1("fncEne", "exp([0]*x)", 0., 100.);
+      fEneFnc = new TF1("EneFnc", "exp([0]*x)", 0., 100.);
       fEneFnc->SetParameter(0, -4.77205e-02);
       
       fAngFnc = new TF1("fAngFnc", "exp([0]*x)", 0., 20.);
@@ -181,11 +181,17 @@ void BIPrimaryGeneratorAction::SecondBeamGun()
 
 void BIPrimaryGeneratorAction::ThirdBeamGun()
 {
+   // TF1 is not thread safe.  
+   G4AutoLock lock(&mutexInPGA);
    fEnergy = fEneFnc->GetRandom() * MeV;
+   lock.unlock();
    
    G4double theta;
-   if(fEnergy > 30.*MeV)
+   if(fEnergy > 30.*MeV){
+      lock.lock();
       theta = fAngFnc->GetRandom() * deg;
+      lock.unlock();
+   }
    else
       theta = acos(1. - G4UniformRand() * (1. - cos(20.*deg)));
    G4double phi = G4UniformRand() * fPhiLimit;
