@@ -67,7 +67,9 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
    
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
    G4ParticleDefinition *proton = parTable->FindParticle("proton");
-   fParticleGun->SetParticleDefinition(proton);
+   G4ParticleDefinition *gamma = parTable->FindParticle("gamma");
+   if(fBeamType == kXTest) fParticleGun->SetParticleDefinition(gamma);
+   else fParticleGun->SetParticleDefinition(proton);
    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
    fParticleGun->SetParticleMomentumDirection(fParVec);
    fParticleGun->SetParticleEnergy(fEnergy);
@@ -97,9 +99,9 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
 
       GunFuncPointer = &BIPrimaryGeneratorAction::FirstBeamGun;
    }
-   else if(fBeamType == kSecondBeam)
+   else if(fBeamType == kSecondBeam){
       GunFuncPointer = &BIPrimaryGeneratorAction::SecondBeamGun;
-   
+   }
    else if(fBeamType == kThirdBeam){
       fEneFnc = new TF1("EneFnc", "exp([0]*x)", 0., 100.);
       fEneFnc->SetParameter(0, -4.77205e-02);
@@ -108,6 +110,10 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
       fAngFnc->SetParameter(0, -8.98131e-02);
 
       GunFuncPointer = &BIPrimaryGeneratorAction::ThirdBeamGun;
+   }
+   else if(fBeamType == kXTest){
+      GunFuncPointer = &BIPrimaryGeneratorAction::XBeamGun;
+      fEnergy = 1. * MeV;
    }
    else{
       G4cout << "Beam type is wrong.  Please check it." << G4endl;
@@ -202,6 +208,14 @@ void BIPrimaryGeneratorAction::ThirdBeamGun()
    G4double vy = sin(theta) * sin(phi);
    G4double vz = cos(theta);
    fParVec = G4ThreeVector(vx, vy, vz);
+}
+
+void BIPrimaryGeneratorAction::XBeamGun()
+{
+   G4double coneTheta = 15.*deg;
+   GetParVec(coneTheta);
+   fEnergy = CLHEP::RandExponential::shoot(10);
+   // no need to unlock.
 }
 
 void BIPrimaryGeneratorAction::DefineCommands()

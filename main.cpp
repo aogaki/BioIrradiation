@@ -51,6 +51,8 @@ unsigned int GetRandomSeed()
 {
    // Using /dev/urandom for generating random number.
    // If it is not, I have to think solution.
+   // And also think /dev/random or /dev/urandom
+   // Using std::random_device of C++11 is better
    unsigned int seed;
    std::ifstream file("/dev/urandom", std::ios::binary);
    if (file.is_open()) {
@@ -59,7 +61,7 @@ unsigned int GetRandomSeed()
       memblock = new char[size];
       file.read(memblock, size);
       file.close();
-      seed = *reinterpret_cast<int *>(memblock);
+      seed = *reinterpret_cast<unsigned int *>(memblock);
       delete[] memblock;
    } else {
       seed = 0;
@@ -87,7 +89,8 @@ int main(int argc, char **argv)
          if(type == "1") beamType = kFirstBeam;
          else if(type == "2") beamType = kSecondBeam;
          else if(type == "3") beamType = kThirdBeam;
-         else if(type == "0") beamType = kElectronTest;
+         else if(type == "4") beamType = kElectronTest;
+         else if(type == "5") beamType = kXTest;
          else{
             G4cout << "Beam type is wrong" << G4endl;
             PrintUsage();
@@ -108,14 +111,13 @@ int main(int argc, char **argv)
       G4cout << "Small output mode" << G4endl;
    }
 
-   // Remove?
    // Choose the Random engine
-   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
+   // Need both?
    unsigned int seed = GetRandomSeed();
    if (seed == 0) seed = time(0);
    G4cout << "\nseed = " << seed << G4endl;
-   CLHEP::HepRandom::setTheSeed(seed);
-   G4Random::setTheSeed(seed);
+   CLHEP::HepRandom::setTheEngine(new CLHEP::MTwistEngine(seed));
+   G4Random::setTheEngine(new CLHEP::MTwistEngine(seed));
 
    // Construct the default run manager
    //

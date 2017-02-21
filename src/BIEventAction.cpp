@@ -109,6 +109,10 @@ void BIEventAction::EndOfEventAction(const G4Event *event)
 
          G4int trackID = newHit->GetTrackID();
          anaMan->FillNtupleIColumn(0, 15, trackID);
+
+         G4double kineticEnergy = newHit->GetKineticEnergy();
+         anaMan->FillNtupleDColumn(0, 16, kineticEnergy);
+
       }
       
       anaMan->AddNtupleRow(0);

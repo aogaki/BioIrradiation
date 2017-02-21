@@ -1,15 +1,7 @@
 #!/bin/bash
 
-for((i=0;i<=20;i++))
+for((i=0;i<100;i++))
 do
-    rm -f circle.att
-    
-    for((j=0;j<70;j++))
-    do
-	echo $((i * 500)) >> circle.att
-    done
-
-    tar zcvf bi$i.tgz *
-    mv bi*.tgz ../
-    
+    ./BI -b 5 --grid -m test.mac
+    hadd -f gamma$i.root result_t*
 done

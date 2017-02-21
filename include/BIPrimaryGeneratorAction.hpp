@@ -12,7 +12,9 @@ enum BeamType{ // I wanna use enum class.  But impossible on Grid (Scientific Li
    kSecondBeam,
    kThirdBeam,
 
-   kElectronTest
+   kElectronTest,
+
+   kXTest
 };
 
 class G4Event;
@@ -45,6 +47,7 @@ private:
    void FirstBeamGun();
    void SecondBeamGun();
    void ThirdBeamGun();
+   void XBeamGun();
    void (BIPrimaryGeneratorAction::*GunFuncPointer)();
    
    G4double fDx;
