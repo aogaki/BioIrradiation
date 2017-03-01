@@ -91,6 +91,7 @@ int main(int argc, char **argv)
          else if(type == "3") beamType = kThirdBeam;
          else if(type == "4") beamType = kElectronTest;
          else if(type == "5") beamType = kXTest;
+         else if(type == "6") beamType = kIonTest;
          else{
             G4cout << "Beam type is wrong" << G4endl;
             PrintUsage();

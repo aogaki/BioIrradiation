@@ -19,6 +19,8 @@
 #include "G4AutoLock.hh"
 #include "g4root.hh"
 #include "G4GenericMessenger.hh"
+#include "G4IonTable.hh"
+#include "G4ChargedGeantino.hh"
 
 #include "BIPrimaryGeneratorAction.hpp"
 
@@ -66,10 +68,21 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
    fParVec = G4ThreeVector(0., 0., 1.);
    
    G4ParticleTable *parTable = G4ParticleTable::GetParticleTable();
-   G4ParticleDefinition *proton = parTable->FindParticle("proton");
-   G4ParticleDefinition *gamma = parTable->FindParticle("gamma");
-   if(fBeamType == kXTest) fParticleGun->SetParticleDefinition(gamma);
-   else fParticleGun->SetParticleDefinition(proton);
+   if(fBeamType == kXTest){
+      G4ParticleDefinition *gamma = parTable->FindParticle("gamma");
+      fParticleGun->SetParticleDefinition(gamma);
+   }
+   else if(fBeamType == kIonTest){ // Still we can not use IonTable?
+      G4ParticleDefinition *particle
+         //= parTable->FindParticle("chargedgeantino");
+         = parTable->FindParticle("GenericIon");
+      fParticleGun->SetParticleDefinition(particle);
+      fFirstShot = true;
+   }
+   else {
+      G4ParticleDefinition *proton = parTable->FindParticle("proton");
+      fParticleGun->SetParticleDefinition(proton);
+   }
    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., fZPosition));
    fParticleGun->SetParticleMomentumDirection(fParVec);
    fParticleGun->SetParticleEnergy(fEnergy);
@@ -113,6 +126,10 @@ BIPrimaryGeneratorAction::BIPrimaryGeneratorAction(BeamType beamType, G4bool gri
    }
    else if(fBeamType == kXTest){
       GunFuncPointer = &BIPrimaryGeneratorAction::XBeamGun;
+      fEnergy = 1. * MeV;
+   }
+   else if(fBeamType == kIonTest){
+      GunFuncPointer = &BIPrimaryGeneratorAction::IonBeamGun;
       fEnergy = 1. * MeV;
    }
    else{
@@ -212,6 +229,27 @@ void BIPrimaryGeneratorAction::ThirdBeamGun()
 
 void BIPrimaryGeneratorAction::XBeamGun()
 {
+   G4double coneTheta = 15.*deg;
+   GetParVec(coneTheta);
+   fEnergy = CLHEP::RandExponential::shoot(10);
+   // no need to unlock.
+}
+
+void BIPrimaryGeneratorAction::IonBeamGun()
+{
+   if(fFirstShot){
+      fFirstShot = false;
+      // Carbon 6+
+      G4int Z = 6, A = 12;
+      G4double ionCharge   = 6.*eplus;
+      G4double excitEnergy = 0.*keV;
+    
+      G4ParticleDefinition *ion
+         = G4IonTable::GetIonTable()->GetIon(Z, A, excitEnergy);
+      fParticleGun->SetParticleDefinition(ion);
+      fParticleGun->SetParticleCharge(ionCharge);
+   }
+
    G4double coneTheta = 15.*deg;
    GetParVec(coneTheta);
    fEnergy = CLHEP::RandExponential::shoot(10);
